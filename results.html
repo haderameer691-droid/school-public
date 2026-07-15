@@ -320,18 +320,18 @@
                     <input type="text" id="schoolYear" class="editable-input-header" style="width: 100px; text-align: center;" value="٢٠٢٥ - ٢٠٢٦" onchange="saveSchoolInfo()">
                 </div>
                 <div class="header-row-inline">
-                    <span>الدور / الشهر  </span>
+                                        <span>الدور /  </span>
                     <select id="examRoleSelect" class="custom-select" onchange="onExamTypeOrRoleOrClassChange()">
                         <option value="الاول" selected>الاول</option>
                         <option value="الثاني">الثاني</option>
-                        <option value="تشرين الأول">تشرين الأول</option>
-                        <option value="تشرين الثاني">تشرين الثاني</option>
-                        <option value="كانون الأول">كانون الأول</option>
-                        <option value="كانون الثاني">كانون الثاني</option>
-                        <option value="شباط">شباط</option>
-                        <option value="آذار">آذار</option>
-                        <option value="نيسان">نيسان</option>
-                        <option value="أيار">أيار</option>
+                        <option value="شهر تشرين الأول">شهر تشرين الأول</option>
+                        <option value="شهر تشرين الثاني">شهر تشرين الثاني</option>
+                        <option value="شهر كانون الأول">شهر كانون الأول</option>
+                        <option value="شهر كانون الثاني">شهر كانون الثاني</option>
+                        <option value="شهر شباط">شهر شباط</option>
+                        <option value="شهر آذار">شهر آذار</option>
+                        <option value="شهر نيسان">شهر نيسان</option>
+                        <option value="شهر آيار">شهر أيار</option>
                     </select>
                 </div>
             </div>
@@ -1025,7 +1025,7 @@
                             <div class="card-header-center-box">
                                 <h2>بطاقة درجات امتحانات ${examType}</h2>
                                 <p>العام الدراسي: ${schoolYear}</p>
-                                <p>الدور / الشهر: ${examRole}</p>
+                                <p>الدور /  ${examRole}</p>
                             </div>
                             <div class="card-header-left">
                                 <span>مدرسة: ${schoolName}</span>
