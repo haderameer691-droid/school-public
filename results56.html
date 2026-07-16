@@ -2,7 +2,7 @@
 <html lang="ar" direction="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منظومة النتائج الامتحانية Prepared by.Alia M.K - الإصدار الاحترافي </title>
+    <title>منظومة نتائج الصفين الخامس والسادس - الإصدار الاحترافي المتوازن</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -182,7 +182,8 @@
                 <div class="header-row-inline" style="margin-top: 10px;">
                     <span>الشعبة: </span>
                     <select id="divisionSelect" class="custom-select" onchange="onClassOrDivisionChange()">
-                        <option value="أ" selected>أ</option><option value="ب">ب</option><option value="ج">ج</option><option value="د">د</option>
+                        <option value="أ" selected>أ</option><option value="ب">ب</option><option value="ج">ج</option><option value="د">د</option><option
+value=" "> </option>
                     </select>
                 </div>
             </div>
@@ -236,10 +237,10 @@
         </div>
 
         <div class="system-footer-view">
-            <div>منظومة النتائج الالكترونية </div>
+            <div>منظومة النتائج الالكترونية</div>
             <div style="display: flex; gap: 60px;">
                 <p>مرشد الصف / <input type="text" id="managerTitle" class="editable-input-header" style="width: 140px;" value="اسم المرشد" onchange="saveFooterInfo()"></p>
-                <p>مدير المدرسة / <input type="text" id="managerName" class="editable-input-header" style="width: 140px;" value="اسم المدير " onchange="saveFooterInfo()"></p>
+                <p>مدير المدرسة / <input type="text" id="managerName" class="editable-input-header" style="width: 140px;" value="اسم المدير" onchange="saveFooterInfo()"></p>
             </div>
         </div>
     </div>
@@ -250,7 +251,7 @@
         <div class="modal-content">
             <h3 style="font-weight: 700;">📋 استيراد سريع من إكسل</h3>
             <p style="font-size:12px; color:#666; font-weight: 500;">قم بنسخ عمودي (رقم القيد ثم اسم التلميذ) من ملف الإكسل والصقها هنا مباشرة</p>
-            <textarea id="pasteTextArea" class="paste-textarea" placeholder="رقم القيد [مسافة] اسم التلميذ"></textarea>
+            <textarea id="pasteTextArea" class="paste-textarea" placeholder="رقم القيد [مسافة] اسم التلميذ/ة"></textarea>
             <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-add" onclick="processPastedData()">استيراد البيانات</button>
                 <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeImportModal()">إلغاء</button>
@@ -351,21 +352,29 @@
         }
 
         function renderTableStructures() {
-            let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
+            let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ/ة</th>`;
             currentSubjects.forEach(s => { html += `<th class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
             html += `<th>المجموع رقمًا</th><th>المجموع كتابةً</th><th>النتيجة</th><th>دروس الإكمال</th><th class="actions-col">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
         }
 
-        function getStoragePrefix() {
+        /* تغيير مفصل لحل مشكلتك أستاذة علياء:
+           الأسماء والقيود يتم ربطها فقط بـ (الصف والشعبة) كي تبقى ثابتة دائماً.
+           الدرجات يتم ربطها بـ (الصف والشعبة والشهر والدور) لتبقى درجات كل شهر منفصلة.
+        */
+        function getClassDivisionPrefix() {
             const cl = document.getElementById('classSelect').value;
             const div = document.getElementById('divisionSelect').value;
+            return `db_${cl}_${div}`;
+        }
+        function getExamRolePrefix() {
             const type = document.getElementById('examTypeSelect').value;
             const role = document.getElementById('examRoleSelect').value;
-            return `db_${cl}_${div}_${type}_${role}`;
+            return `${getClassDivisionPrefix()}_${type}_${role}`;
         }
-        function getNamesStorageKey() { return `${getStoragePrefix()}_names`; }
-        function getGradesStorageKey() { return `${getStoragePrefix()}_grades`; }
+
+        function getNamesStorageKey() { return `${getClassDivisionPrefix()}_names`; }
+        function getGradesStorageKey() { return `${getExamRolePrefix()}_grades`; }
 
         function saveSchoolInfo() {
             localStorage.setItem('advSchoolGlobalInfo', JSON.stringify({
@@ -400,7 +409,7 @@
                 <td class="calc-sum-word"></td>
                 <td class="calc-status">-</td>
                 <td class="calc-fail-list" style="font-size:11px; color:#990000; font-weight:500;">-</td>
-                <td class="actions-col"><button class="btn btn-delete" onclick="this.closest('tr').remove(); saveAllStudentsData();">حذف</button></td>
+                <td class="actions-col"><button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button></td>
             `;
             return tr;
         }
@@ -544,6 +553,7 @@
                 name: row.querySelector('.student-name-input').value.trim(),
                 grades: Array.from(row.querySelectorAll('.grade-input-field')).map(i => i.value.trim())
             })).filter(s => s.name !== "");
+            
             data.sort((a,b) => a.name.localeCompare(b.name, 'ar'));
             const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
             if(data.length === 0) tbody.appendChild(createRowElement({id:"", name:"", grades:new Array(currentSubjects.length).fill("")}, 1));
@@ -557,6 +567,15 @@
             tbody.appendChild(tr); saveAllStudentsData(); tr.querySelector('.student-name-input').focus();
         }
 
+        function deleteStudentRow(button) {
+            if (confirm("هل أنت متأكد من حذف هذا التلميذ/ة؟ (سيتم حذفه ودرجاته نهائياً من الشعبة)")) {
+                button.closest('tr').remove();
+                saveAllStudentsData();
+                calculateLiveStatistics();
+                combinedSearchAndFilter();
+            }
+        }
+
         function clearOnlyGrades() {
             if (confirm("🧹 هل أنتِ متأكدة من مسح جميع درجات امتحان/الشهر الحالي فقط؟\n(سيتم الاحتفاظ بأسماء التلاميذ وأرقام قيودهم كاملاً)")) {
                 document.querySelectorAll('.student-row').forEach(row => {
@@ -567,19 +586,28 @@
                 });
                 saveAllStudentsData();
                 calculateLiveStatistics();
-                alert("✅ تم مسح الدرجات المحددة بنجاح.");
+                alert("✅ تم مسح درجات هذا الشهر فقط بنجاح.");
             }
         }
 
         function clearAllData() {
-            if (confirm("⚠️ تفريغ السجل الحالي للمجموعة المحددة؟ (سيتم مسح الاسماء والدرجات)")) {
-                localStorage.removeItem(getNamesStorageKey()); localStorage.removeItem(getGradesStorageKey());
+            if (confirm("⚠️ تفريغ السجل بالكامل لهذه الشعبة؟ (سيتم مسح الأسماء والدرجات لجميع الأشهر التابعة لها!)")) {
+                localStorage.removeItem(getNamesStorageKey());
+                // مسح كل مفاتيح الدرجات التابعة لهذه الشعبة
+                let prefix = getClassDivisionPrefix();
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    let key = localStorage.key(i);
+                    if (key.startsWith(prefix)) {
+                        localStorage.removeItem(key);
+                    }
+                }
                 loadCurrentGroupData();
             }
         }
 
         function openImportModal() { document.getElementById('pasteTextArea').value=''; document.getElementById('importModal').style.display='block'; }
         function closeImportModal() { document.getElementById('importModal').style.display='none'; }
+        
         function processPastedData() {
             const txt = document.getElementById('pasteTextArea').value; if(!txt.trim()) return;
             const tbody = document.getElementById('tableBody');
@@ -600,9 +628,10 @@
                 const idIn = row.querySelector('.student-id-input'); if(idIn) idIn.value = forceArabicDigitsText(idIn.value);
                 const id = idIn ? idIn.value.trim() : ""; const name = nameIn.value.trim();
                 const gList = []; row.querySelectorAll('.grade-input-field').forEach(i => { gList.push(i.value.trim()); });
-                names.push({id, name}); grades.push({id, grades: gList});
+                names.push({id, name}); grades.push({name, grades: gList}); // نربط الدرجة بالاسم للتأمين
             });
-            localStorage.setItem(getNamesStorageKey(), JSON.stringify(names)); localStorage.setItem(getGradesStorageKey(), JSON.stringify(grades));
+            localStorage.setItem(getNamesStorageKey(), JSON.stringify(names)); 
+            localStorage.setItem(getGradesStorageKey(), JSON.stringify(grades));
             showSaveIndicator();
         }
 
@@ -610,8 +639,17 @@
             const names = JSON.parse(localStorage.getItem(getNamesStorageKey()) || "[]");
             const grades = JSON.parse(localStorage.getItem(getGradesStorageKey()) || "[]");
             const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
-            if(names.length === 0) tbody.appendChild(createRowElement({id:"", name:"", grades:new Array(currentSubjects.length).fill("")}, 1));
-            else names.forEach((n, i) => tbody.appendChild(createRowElement({id:n.id, name:n.name, grades:(grades[i]?grades[i].grades:new Array(currentSubjects.length).fill(""))}, i+1)));
+            
+            if(names.length === 0) {
+                tbody.appendChild(createRowElement({id:"", name:"", grades:new Array(currentSubjects.length).fill("")}, 1));
+            } else {
+                names.forEach((n, i) => {
+                    // البحث عن درجات هذا التلميذ بالاسم للتأكد من المزامنة
+                    let foundGradeObj = grades.find(g => g.name === n.name);
+                    let sGrades = foundGradeObj ? foundGradeObj.grades : new Array(currentSubjects.length).fill("");
+                    tbody.appendChild(createRowElement({id: n.id, name: n.name, grades: sGrades}, i+1));
+                });
+            }
             combinedSearchAndFilter(); calculateLiveStatistics();
         }
 
@@ -646,12 +684,11 @@
         }
 
         function getGradeFromStorage(cl, div, type, role, studentName, subjectIdx) {
-            let prefix = `db_${cl}_${div}_${type}_${role}`;
-            let names = JSON.parse(localStorage.getItem(`${prefix}_names`) || "[]");
-            let grades = JSON.parse(localStorage.getItem(`${prefix}_grades`) || "[]");
-            let sIdx = names.findIndex(n => n.name === studentName);
-            if(sIdx !== -1 && grades[sIdx] && grades[sIdx].grades && grades[sIdx].grades[subjectIdx] !== undefined) {
-                let val = toEnglishDigits(grades[sIdx].grades[subjectIdx]);
+            let prefix = `db_${cl}_${div}`;
+            let grades = JSON.parse(localStorage.getItem(`${prefix}_${type}_${role}_grades`) || "[]");
+            let foundGradeObj = grades.find(g => g.name === studentName);
+            if(foundGradeObj && foundGradeObj.grades && foundGradeObj.grades[subjectIdx] !== undefined) {
+                let val = toEnglishDigits(foundGradeObj.grades[subjectIdx]);
                 return val === "" ? null : val;
             }
             return null;
@@ -775,7 +812,7 @@
                             <div class="adv-header-right">جمهورية العراق<br>وزارة التربية<br>المديرية العامة للتربية في محافظة بابل<br>مدرسة: ${schoolName}</div>
                             <div class="adv-header-center-box"><h2>بطاقة الدرجات</h2><p>العام الدراسي: ${schoolYear}</p></div>
                             <div class="adv-header-left">
-                                <div>اسم التلميذ: ${studentName}</div>
+                                <div>اسم التلميذ/ة: ${studentName}</div>
                                 <div>الصف والشعبة: ${className} - (${divisionName})</div>
                                 <div>رقم القيد: ${examId}</div>
                             </div>
@@ -845,8 +882,8 @@
             }
             if(sc.role) document.getElementById('examRoleSelect').value = sc.role;
             const f = JSON.parse(localStorage.getItem('advFooterInfoData') || "{}");
-            document.getElementById('managerName').value = f.manager || "اعلام جاسم نصيف";
-            document.getElementById('managerTitle').value = f.title || "علياء محمد كريم";
+            document.getElementById('managerName').value = f.manager || "اسم المدير";
+            document.getElementById('managerTitle').value = f.title || "اسم المرشد";
             renderTableStructures(); loadCurrentGroupData();
         }
         window.onclick = function(e) { if(e.target == document.getElementById('importModal')) closeImportModal(); }
