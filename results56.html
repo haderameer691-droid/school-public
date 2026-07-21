@@ -10,7 +10,7 @@
         body { font-family: 'Cairo', sans-serif; font-weight: 600; direction: rtl; text-align: right; margin: 20px; background-color: #f5f7fa; color: #1e293b; }
         
         .new-header-container { display: flex; justify-content: space-between; align-items: flex-start; background: #fff; padding: 15px 25px; border: 2px solid #000; border-radius: 8px; margin-bottom: 20px; }
-        .header-right, .header-left { font-size: 14px; font-weight: 500; flex: 1; text-align: right; margin-top: 10px; }
+        .header-right, .header-left { font-size: 14px; font-weight: 500; flex: 0.5; text-align: right; margin-top: 10px; }
         .header-left { display: flex; flex-direction: column; align-items: flex-start; }
         .header-center { text-align: center; flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
         .header-row-inline { display: block; font-size: 14px; font-weight: 500; margin-bottom: 5px; }
@@ -153,7 +153,7 @@
         <div class="new-header-container">
             <div class="header-right">
                 <div class="header-row-inline">
-                    <span>إدارة مدرسة </span>
+                    <span>إدارة مدرسة</span>
                     <input type="text" id="schoolName" class="editable-input-header" value="اسم المدرسة" onchange="saveSchoolInfo()">
                 </div>
             </div>
