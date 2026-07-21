@@ -2,14 +2,13 @@
 <html lang="ar" direction="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منظومة نتائج الصفين الخامس والسادس - الإصدار الاحترافي المتوازن</title>
+    <title>منظومة نتائج الدرجات الالكترونية</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; font-weight: 600; direction: rtl; text-align: right; margin: 20px; background-color: #f5f7fa; color: #1e293b; }
         
-        /* الهيدر الرئيسي مع أوزان نصوص متوازنة لتخفيف العتمة */
         .new-header-container { display: flex; justify-content: space-between; align-items: flex-start; background: #fff; padding: 15px 25px; border: 2px solid #000; border-radius: 8px; margin-bottom: 20px; }
         .header-right, .header-left { font-size: 14px; font-weight: 500; flex: 1; text-align: right; margin-top: 10px; }
         .header-left { display: flex; flex-direction: column; align-items: flex-start; }
@@ -31,6 +30,7 @@
         .btn-excel { background-color: #17a2b8; color: white; }
         .btn-backup { background-color: #4a5568; color: white; }
         .btn-restore { background-color: #2d3748; color: white; }
+        .btn-migrate { background-color: #6f42c1; color: white; }
         .btn-cards-advanced { background-color: #0d2c54; color: white; }
         .btn-print { background-color: #ffc107; color: black; }
         .btn-clear-grades { background-color: #fd7e14; color: white; }
@@ -39,7 +39,6 @@
         .save-indicator { display: none; background-color: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; border: 2px solid #155724; }
         .search-input { font-family: 'Cairo', sans-serif; font-weight: 600; padding: 5px 10px; border: 2px solid #000; border-radius: 4px; width: 220px; }
         
-        /* السجل الرئيسي ببيانات واضحة وغامقة */
         .table-responsive { width: 100%; overflow-x: auto; background: #fff; border: 2px solid #000; border-radius: 8px; max-height: 450px; margin-bottom: 25px; }
         .results-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; }
         .results-table th, .results-table td { border-left: 2px solid #000; border-bottom: 2px solid #000; padding: 6px 4px; font-size: 13px; font-weight: 500; color: #000; }
@@ -56,8 +55,19 @@
         .id-input-cell { width: 80px; min-width: 80px; }
         
         .calc-sum-num { font-weight: 700 !important; font-size: 14px !important; }
-        /* تصغير حجم نص عمود المجموع كتابة ليتناسق التوزيع */
-        .calc-sum-word { font-size: 11px !important; font-weight: 600 !important; max-width: 130px; word-wrap: break-word; }
+        
+        /* التعديل الجديد: تصغير خط عمودي المجموع كتابة ومواد الإكمال وتقليل الارتفاع والحشو البيني */
+        .calc-sum-word, .calc-fail-list { 
+            font-size: 10.5px !important; 
+            font-weight: 600 !important; 
+            line-height: 1.1 !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+            max-width: 130px; 
+            word-wrap: break-word; 
+            white-space: normal !important;
+        }
+        
         .calc-status { font-weight: 700 !important; }
         
         .status-pass { background-color: #d4edda !important; color: #155724 !important; }
@@ -70,7 +80,6 @@
         .system-footer-view { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; padding: 10px; border-top: 2px dashed #000; page-break-inside: avoid; }
         .system-footer-view p { font-weight: 700; }
 
-        /* تعديل جدول الإحصاء ليكون أفقياً بالكامل وبلون أسود غامق عريض وواضح جداً للطباعة */
         .stats-section { background: #fff; padding: 15px; border: 2px solid #000; border-radius: 8px; margin-top: 20px; page-break-inside: avoid; overflow-x: auto; }
         .stats-table { width: 100%; border-collapse: collapse; text-align: center; border: 2px solid #000; table-layout: fixed; }
         .stats-table th, .stats-table td { border: 2px solid #000; padding: 6px 4px; font-size: 12px; font-weight: 800 !important; color: #000000 !important; }
@@ -78,7 +87,6 @@
         .stats-label-col { text-align: right !important; padding-right: 12px !important; background-color: #f1f5f9; width: 160px; }
         .total-cell-highlight { background-color: #cbd5e1 !important; }
         
-        /* ------------------ تصميم الكروت المطور والضبط الهندسي النحيف ------------------ */
         #advancedCardsContainer { display: none; background-color: #f4f6f6; padding: 15px; direction: rtl; }
         
         .advanced-report-card { font-family: 'Cairo', sans-serif; font-weight: 600; background: #fff; border: 3px solid #000; padding: 15px 25px; margin: 0 auto 25px auto; width: 960px; height: 18.2cm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid; page-break-after: always; color: #000; }
@@ -123,6 +131,13 @@
             .table-responsive { max-height: none !important; overflow: visible !important; border: none !important; }
             .results-table { width: 100% !important; border: 2px solid #000 !important; }
             
+            /* تحسين الطباعة للتأكيد على الخط النحيف والمضغوط للعمودين ومنع تجاوز الطول */
+            .calc-sum-word, .calc-fail-list {
+                font-size: 9.5px !important;
+                line-height: 1.05 !important;
+                padding: 2px 1px !important;
+            }
+            
             body.adv-cards-view-active #mainSystemContainer { display: none !important; }
             body.adv-cards-view-active #advancedCardsContainer { display: block !important; padding: 0 !important; margin: 0 !important; }
             
@@ -138,8 +153,8 @@
         <div class="new-header-container">
             <div class="header-right">
                 <div class="header-row-inline">
-                    <span>المدرسة: </span>
-                    <input type="text" id="schoolName" class="editable-input-header" value="الرباط الابتدائية للبنين" onchange="saveSchoolInfo()">
+                    <span>إدارة مدرسة </span>
+                    <input type="text" id="schoolName" class="editable-input-header" value="اسم المدرسة" onchange="saveSchoolInfo()">
                 </div>
             </div>
             <div class="header-center">
@@ -182,8 +197,8 @@
                 <div class="header-row-inline" style="margin-top: 10px;">
                     <span>الشعبة: </span>
                     <select id="divisionSelect" class="custom-select" onchange="onClassOrDivisionChange()">
-                        <option value="أ" selected>أ</option><option value="ب">ب</option><option value="ج">ج</option><option value="د">د</option><option
-value=" "> </option>
+                        <option value="بدون شعبة" selected>بدون شعبة</option>
+                        <option value="أ">أ</option><option value="ب">ب</option><option value="ج">ج</option><option value="د">د</option>
                     </select>
                 </div>
             </div>
@@ -193,6 +208,7 @@ value=" "> </option>
             <div class="controls-row">
                 <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ</button>
                 <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد من إكسل</button>
+                <button class="btn btn-migrate" onclick="openMigrationModal()">📦 ترحيل واستيراد أسماء التلاميذ</button>
                 <button class="btn btn-backup" onclick="exportFullBackup()">📤 تصدير نسخة احتياطية</button>
                 <button class="btn btn-restore" onclick="triggerBackupUpload()">📥 استيراد نسخة احتياطية</button>
                 <input type="file" id="backupFileInput" style="display:none" accept=".json" onchange="importFullBackup(event)">
@@ -251,10 +267,49 @@ value=" "> </option>
         <div class="modal-content">
             <h3 style="font-weight: 700;">📋 استيراد سريع من إكسل</h3>
             <p style="font-size:12px; color:#666; font-weight: 500;">قم بنسخ عمودي (رقم القيد ثم اسم التلميذ) من ملف الإكسل والصقها هنا مباشرة</p>
-            <textarea id="pasteTextArea" class="paste-textarea" placeholder="رقم القيد [مسافة] اسم التلميذ/ة"></textarea>
+            <textarea id="pasteTextArea" class="paste-textarea" placeholder="رقم القيد [مسافة] اسم التلميذ"></textarea>
             <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-add" onclick="processPastedData()">استيراد البيانات</button>
                 <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeImportModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="migrationModal" class="custom-modal">
+        <div class="modal-content" style="width: 40%;">
+            <h3 style="font-weight: 700; color: #6f42c1;">📦 نافذة ترحيل ونقل أسماء التلاميذ</h3>
+            <hr style="border: 1px solid #000;">
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 700;">إجراء النقل الفرعي:</label>
+                <select id="migrationActionType" class="custom-select" style="width: 100%; text-align: right;" onchange="toggleMigrationDirectionLabels()">
+                    <option value="IMPORT">استيراد أسماء تلاميذ من صف/شعبة أخرى إلى السجل الحالي</option>
+                    <option value="EXPORT">ترحيل وتصدير أسماء السجل الحالي إلى صف/شعبة أخرى</option>
+                </select>
+            </div>
+
+            <div style="background: #f8fafc; padding: 10px; border: 2px dashed #6f42c1; border-radius: 6px; margin-bottom: 15px;">
+                <p id="migrationSourceLabel" style="margin: 0 0 5px 0; font-weight: 700;">من (الصف والشعبة المصدر):</p>
+                <div style="display: flex; gap: 10px;">
+                    <select id="migTargetClass" class="custom-select" style="flex: 1;">
+                        <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                        <option value="السادس الابتدائي">السادس الابتدائي</option>
+                    </select>
+                    <select id="migTargetDivision" class="custom-select" style="width: 120px;">
+                        <option value="بدون شعبة">بدون شعبة</option>
+                        <option value="أ">أ</option><option value="ب">ب</option><option value="ج">ج</option><option 
+value="د">د</option><option                   value="بدون شعبة">بدون شعبة</option>
+                      
+                    </select>
+                </div>
+                <p id="migrationDestLabel" style="margin: 10px 0 0 0; font-weight: 500; color: #555;">إلى السجل الحالي المفتوح بالخلفية</p>
+            </div>
+
+            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: سيتم نقل الأسماء وأرقام القيود فقط بشكل أبجدي نظيف دون تكرار للدرجات، ليتسنى رصد الدرجات الجديدة فوراً.</p>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-migrate" onclick="executeStudentsMigration()">تنفيذ عملية النقل</button>
+                <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeMigrationModal()">إغلاق النافذة</button>
             </div>
         </div>
     </div>
@@ -337,7 +392,7 @@ value=" "> </option>
                 if (selectedStatus === "ALL") {
                     matchStatus = true;
                 } else if (selectedStatus === "غائب") {
-                    matchStatus = isAllAbsent;
+                    matchStatus = (currentStatus === "غائب");
                 } else {
                     matchStatus = (currentStatus === selectedStatus);
                 }
@@ -352,16 +407,12 @@ value=" "> </option>
         }
 
         function renderTableStructures() {
-            let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ/ة</th>`;
+            let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
             currentSubjects.forEach(s => { html += `<th class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
-            html += `<th>المجموع رقمًا</th><th>المجموع كتابةً</th><th>النتيجة</th><th>دروس الإكمال</th><th class="actions-col">إجراءات</th>`;
+            html += `<th>المجموع رقمًا</th><th style="width:130px;">المجموع كتابةً</th><th>النتيجة</th><th style="width:130px;">دروس الإكمال</th><th class="actions-col">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
         }
 
-        /* تغيير مفصل لحل مشكلتك أستاذة علياء:
-           الأسماء والقيود يتم ربطها فقط بـ (الصف والشعبة) كي تبقى ثابتة دائماً.
-           الدرجات يتم ربطها بـ (الصف والشعبة والشهر والدور) لتبقى درجات كل شهر منفصلة.
-        */
         function getClassDivisionPrefix() {
             const cl = document.getElementById('classSelect').value;
             const div = document.getElementById('divisionSelect').value;
@@ -408,7 +459,7 @@ value=" "> </option>
                 <td class="calc-sum-num">٠</td>
                 <td class="calc-sum-word"></td>
                 <td class="calc-status">-</td>
-                <td class="calc-fail-list" style="font-size:11px; color:#990000; font-weight:500;">-</td>
+                <td class="calc-fail-list">-</td>
                 <td class="actions-col"><button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button></td>
             `;
             return tr;
@@ -472,16 +523,30 @@ value=" "> </option>
 
                 totalStudentsInDivision++;
 
+                let isAllAbsent = true;
+                fields.forEach(f => {
+                    if (f.value.trim() !== "" && toEnglishDigits(f.value.trim()) !== "غ") {
+                        isAllAbsent = false;
+                    }
+                });
+
                 let status = "ناجح"; statusCell.className = "calc-status status-pass";
                 if(failList.length > 0) {
                     if(failList.length <= 2) { status = "مكمل"; statusCell.className = "calc-status status-com"; }
                     else { status = "راسب"; statusCell.className = "calc-status status-fail"; }
                 }
 
-                if(status === "ناجح") totalPassInDivision++;
-                else if(status === "مكمل" || status === "راسب") totalFailInDivision++;
+                if(isAllAbsent) {
+                    status = "غائب";
+                    statusCell.className = "calc-status status-absent";
+                    totalAbsentInDivision++;
+                } else if(status === "ناجح") {
+                    totalPassInDivision++;
+                } else {
+                    totalFailInDivision++;
+                }
 
-                if(isFinalYear && (status === "مكمل" || status === "راسب")) {
+                if(isAllAbsent || (isFinalYear && (status === "مكمل" || status === "راسب"))) {
                     sumNumCell.innerText = "٠";
                     sumWordCell.innerText = ""; 
                 } else {
@@ -491,28 +556,24 @@ value=" "> </option>
 
                 statusCell.innerText = status;
                 
-                if (status === "مكمل") {
+                if (status === "مكمل" && !isAllAbsent) {
                     failCell.innerText = failList.join(" و ");
                 } else {
                     failCell.innerText = ""; 
                 }
             });
 
-            // بناء الهيدر الأفقي لجدول الإحصاء
             let headerHtml = `<tr><th class="stats-label-col">المادة الدراسية</th>`;
-            currentSubjects.forEach(sub => {
-                headerHtml += `<th>${sub}</th>`;
-            });
+            currentSubjects.forEach(sub => { headerHtml += `<th>${sub}</th>`; });
             headerHtml += `<th class="total-cell-highlight">الإجمالي الكلي للشعبة</th></tr>`;
             document.getElementById('statsTableHeader').innerHTML = headerHtml;
 
-            // حساب الأرقام والنسب الإجمالية
             let totalPct = 0;
-            if (totalStudentsInDivision > 0) {
-                totalPct = customRoundValue((totalPassInDivision / totalStudentsInDivision) * 100);
+            let actualParticipants = totalStudentsInDivision - totalAbsentInDivision;
+            if (actualParticipants > 0) {
+                totalPct = customRoundValue((totalPassInDivision / actualParticipants) * 100);
             }
 
-            // بناء صفوف الإحصاء العمودية (التحويل الأفقي)
             let rowsConfig = [
                 { label: "المشتركون", key: "total", totalVal: totalStudentsInDivision, isPct: false, highlight: false },
                 { label: "الناجحون", key: "pass", totalVal: totalPassInDivision, isPct: false, highlight: false },
@@ -524,26 +585,20 @@ value=" "> </option>
             let bodyHtml = "";
             rowsConfig.forEach(rowConf => {
                 bodyHtml += `<tr><td class="stats-label-col">${rowConf.label}</td>`;
-                
                 subStats.forEach(s => {
                     let val = "";
                     if(rowConf.isPct) {
                         let pct = 0;
-                        let activeParticipants = s.pass + s.fail;
-                        if (activeParticipants > 0) pct = customRoundValue((s.pass / activeParticipants) * 100);
+                        if (s.total > 0) pct = customRoundValue((s.pass / s.total) * 100);
                         val = `%${toArabicDigits(pct)}`;
                     } else {
                         val = toArabicDigits(s[rowConf.key]);
                     }
-                    
                     bodyHtml += `<td ${rowConf.highlight ? 'style="background: #e2e8f0;"' : ''}>${val}</td>`;
                 });
-
-                // خلية المجموع الكلي للشعبة في نهاية الصف
                 let displayTotalVal = rowConf.isPct ? `%${toArabicDigits(rowConf.totalVal)}` : toArabicDigits(rowConf.totalVal);
                 bodyHtml += `<td class="total-cell-highlight">${displayTotalVal}</td></tr>`;
             });
-
             document.getElementById('statsTableBody').innerHTML = bodyHtml;
         }
 
@@ -568,11 +623,9 @@ value=" "> </option>
         }
 
         function deleteStudentRow(button) {
-            if (confirm("هل أنت متأكد من حذف هذا التلميذ/ة؟ (سيتم حذفه ودرجاته نهائياً من الشعبة)")) {
+            if (confirm("هل أنت متأكد من حذف هذا التلميذ؟ (سيتم حذفه ودرجاته نهائياً من الشعبة)")) {
                 button.closest('tr').remove();
-                saveAllStudentsData();
-                calculateLiveStatistics();
-                combinedSearchAndFilter();
+                saveAllStudentsData(); calculateLiveStatistics(); combinedSearchAndFilter();
             }
         }
 
@@ -580,12 +633,10 @@ value=" "> </option>
             if (confirm("🧹 هل أنتِ متأكدة من مسح جميع درجات امتحان/الشهر الحالي فقط؟\n(سيتم الاحتفاظ بأسماء التلاميذ وأرقام قيودهم كاملاً)")) {
                 document.querySelectorAll('.student-row').forEach(row => {
                     row.querySelectorAll('.grade-input-field').forEach(input => {
-                        input.value = "";
-                        input.className = "direct-input grade-input-field";
+                        input.value = ""; input.className = "direct-input grade-input-field";
                     });
                 });
-                saveAllStudentsData();
-                calculateLiveStatistics();
+                saveAllStudentsData(); calculateLiveStatistics();
                 alert("✅ تم مسح درجات هذا الشهر فقط بنجاح.");
             }
         }
@@ -593,13 +644,10 @@ value=" "> </option>
         function clearAllData() {
             if (confirm("⚠️ تفريغ السجل بالكامل لهذه الشعبة؟ (سيتم مسح الأسماء والدرجات لجميع الأشهر التابعة لها!)")) {
                 localStorage.removeItem(getNamesStorageKey());
-                // مسح كل مفاتيح الدرجات التابعة لهذه الشعبة
                 let prefix = getClassDivisionPrefix();
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     let key = localStorage.key(i);
-                    if (key.startsWith(prefix)) {
-                        localStorage.removeItem(key);
-                    }
+                    if (key.startsWith(prefix)) { localStorage.removeItem(key); }
                 }
                 loadCurrentGroupData();
             }
@@ -621,6 +669,61 @@ value=" "> </option>
             saveAllStudentsData(); sortStudentsAlphabetically(); closeImportModal();
         }
 
+        function openMigrationModal() {
+            document.getElementById('migrationModal').style.display = 'block';
+            toggleMigrationDirectionLabels();
+        }
+        function closeMigrationModal() {
+            document.getElementById('migrationModal').style.display = 'none';
+        }
+        function toggleMigrationDirectionLabels() {
+            const type = document.getElementById('migrationActionType').value;
+            const srcLabel = document.getElementById('migrationSourceLabel');
+            const destLabel = document.getElementById('migrationDestLabel');
+            if(type === "IMPORT") {
+                srcLabel.innerHTML = "من (الصف والشعبة المصدر المراد الاستيراد منها):";
+                destLabel.innerHTML = "⬇️ إلى الصف والشعبة الحالية المفتوحة في الواجهة بالخلفية.";
+            } else {
+                srcLabel.innerHTML = "إلى (الصف والشعبة الهدف المراد الترحيل إليها):";
+                destLabel.innerHTML = "⬆️ من الصف والشعبة الحالية المفتوحة في الواجهة بالخلفية.";
+            }
+        }
+        function executeStudentsMigration() {
+            const actionType = document.getElementById('migrationActionType').value;
+            const targetClass = document.getElementById('migTargetClass').value;
+            const targetDivision = document.getElementById('migTargetDivision').value;
+            
+            const currentClass = document.getElementById('classSelect').value;
+            const currentDivision = document.getElementById('divisionSelect').value;
+
+            if(targetClass === currentClass && targetDivision === currentDivision) {
+                alert("❌ لا يمكن النقل إلى نفس الصف والشعبة المفتوحة حالياً! الرجاء اختيار صف أو شعبة مختلفة.");
+                return;
+            }
+
+            const currentKey = getNamesStorageKey();
+            const foreignKey = `db_${targetClass}_${targetDivision}_names`;
+
+            if(actionType === "IMPORT") {
+                const data = JSON.parse(localStorage.getItem(foreignKey) || "[]");
+                if(data.length === 0) return alert("❌ لم يتم العثور على أي أسماء تلاميذ مخزنة في الصف المحدد للاستيراد منها!");
+                if(confirm(`هل أنتِ متأكدة من استيراد ونسخ (${data.length}) تلميذ من [${targetClass} - ${targetDivision}] إلى الصف الحالي؟\n(سيتم استبدال الأسماء الحالية بالأسماء المستوردة مع الحفاظ على نظافة السجل الحالية)`)) {
+                    localStorage.setItem(currentKey, JSON.stringify(data));
+                    loadCurrentGroupData();
+                    closeMigrationModal();
+                    alert("✅ تم استيراد أسماء التلاميذ بنجاح!");
+                }
+            } else {
+                const data = JSON.parse(localStorage.getItem(currentKey) || "[]");
+                if(data.length === 0 || (data.length === 1 && data[0].name === "")) return alert("❌ السجل الحالي فارغ، لا توجد أسماء تلاميذ لترحيلها!");
+                if(confirm(`هل أنتِ متأكدة من ترحيل ونسخ (${data.length}) تلميذ من الصف الحالي إلى [${targetClass} - ${targetDivision}]؟\n⚠️ تنبيه: هذا الإجراء سيستبدل قائمة الأسماء في الصف المستهدف بالأسماء الحالية.`)) {
+                    localStorage.setItem(foreignKey, JSON.stringify(data));
+                    closeMigrationModal();
+                    alert(`✅ تم ترحيل الأسماء بنجاح إلى [${targetClass} - ${targetDivision}]! يمكنك الانتقال إليها الآن لرصد درجاتهم.`);
+                }
+            }
+        }
+
         function saveAllStudentsData() {
             const names = []; const grades = [];
             document.querySelectorAll('.student-row').forEach(row => {
@@ -628,7 +731,7 @@ value=" "> </option>
                 const idIn = row.querySelector('.student-id-input'); if(idIn) idIn.value = forceArabicDigitsText(idIn.value);
                 const id = idIn ? idIn.value.trim() : ""; const name = nameIn.value.trim();
                 const gList = []; row.querySelectorAll('.grade-input-field').forEach(i => { gList.push(i.value.trim()); });
-                names.push({id, name}); grades.push({name, grades: gList}); // نربط الدرجة بالاسم للتأمين
+                names.push({id, name}); grades.push({name, grades: gList});
             });
             localStorage.setItem(getNamesStorageKey(), JSON.stringify(names)); 
             localStorage.setItem(getGradesStorageKey(), JSON.stringify(grades));
@@ -644,7 +747,6 @@ value=" "> </option>
                 tbody.appendChild(createRowElement({id:"", name:"", grades:new Array(currentSubjects.length).fill("")}, 1));
             } else {
                 names.forEach((n, i) => {
-                    // البحث عن درجات هذا التلميذ بالاسم للتأكد من المزامنة
                     let foundGradeObj = grades.find(g => g.name === n.name);
                     let sGrades = foundGradeObj ? foundGradeObj.grades : new Array(currentSubjects.length).fill("");
                     tbody.appendChild(createRowElement({id: n.id, name: n.name, grades: sGrades}, i+1));
@@ -726,12 +828,9 @@ value=" "> </option>
                     let t1 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
                     let t2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
                     let t3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
-                    
                     let mid = getGradeFromStorage(className, divisionName, "نصف السنة", "الأول", studentName, idx);
-                    
                     let m2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "آذار", studentName, idx)) || 0;
                     let m3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "نيسان", studentName, idx)) || 0;
-                    
                     let fin = getGradeFromStorage(className, divisionName, "نهاية السنة", "الأول", studentName, idx);
 
                     let currentRole = document.getElementById('examRoleSelect').value;
@@ -752,15 +851,10 @@ value=" "> </option>
                     let avg1 = customRoundValue((t1 + t2 + t3) / 3);
                     let avg2 = customRoundValue((m2 + m3) / 2);
                     let effort = customRoundValue((avg1 + midNum + avg2) / 3);
-                    
                     let finalG = isSubAbsent ? 0 : customRoundValue((effort + finNum) / 2);
 
-                    if(isSubAbsent) { 
-                        cardFailList.push(sub); 
-                    } else if(active) { 
-                        if(finalG < 50) cardFailList.push(sub); 
-                        sumFinal += finalG; 
-                    }
+                    if(isSubAbsent) { cardFailList.push(sub); } 
+                    else if(active) { if(finalG < 50) cardFailList.push(sub); sumFinal += finalG; }
 
                     tableRowsHtml += `
                         <tr>
@@ -788,17 +882,14 @@ value=" "> </option>
                 }
 
                 let realCardAverage = 0;
-                if(activeSubjectsCount > 0) {
-                    realCardAverage = sumFinal / activeSubjectsCount;
-                }
+                if(activeSubjectsCount > 0) realCardAverage = sumFinal / activeSubjectsCount;
 
                 let sumDigitsStr = toArabicDigits(sumFinal);
                 let sumWordsStr = convertTotalNumberToWords(sumFinal);
                 let avgDigitsStr = forceArabicDigitsText(realCardAverage.toFixed(2));
 
                 if(currentExamType === "نهاية السنة" && (cardStatusTxt === "مكمل" || cardStatusTxt === "راسب")) {
-                    sumDigitsStr = "٠"; sumWordsStr = "صفر";
-                    avgDigitsStr = "٠";
+                    sumDigitsStr = "٠"; sumWordsStr = "صفر"; avgDigitsStr = "٠";
                 }
 
                 let failSubjectsMiniHtml = '';
@@ -809,10 +900,10 @@ value=" "> </option>
                 htmlCards += `
                     <div class="advanced-report-card">
                         <div class="adv-header">
-                            <div class="adv-header-right">جمهورية العراق<br>وزارة التربية<br>المديرية العامة للتربية في محافظة بابل<br>مدرسة: ${schoolName}</div>
+                            <div class="adv-header-right">جمهورية العراق<br>وزارة التربية<br>المديرية العامة للتربية في محافظة بابل<br>مدرسة ${schoolName}</div>
                             <div class="adv-header-center-box"><h2>بطاقة الدرجات</h2><p>العام الدراسي: ${schoolYear}</p></div>
                             <div class="adv-header-left">
-                                <div>اسم التلميذ/ة: ${studentName}</div>
+                                <div>اسم التلميذ: ${studentName}</div>
                                 <div>الصف والشعبة: ${className} - (${divisionName})</div>
                                 <div>رقم القيد: ${examId}</div>
                             </div>
@@ -825,7 +916,7 @@ value=" "> </option>
                                     <th rowspan="2">معدل ف١</th>
                                     <th rowspan="2">نصف السنة</th>
                                     <th colspan="2">الفصل الثاني</th>
-                                    <th rowspan="2">معدل ف٢</th>
+                                    <th rowspan="2">معدل ف2</th>
                                     <th rowspan="2">السعي السنوي</th>
                                     <th rowspan="2">نهاية السنة</th>
                                     <th rowspan="2">الدرجة النهائية</th>
@@ -834,15 +925,12 @@ value=" "> </option>
                                     <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${tableRowsHtml}
-                            </tbody>
+                            <tbody>${tableRowsHtml}</tbody>
                         </table>
                         <div class="adv-card-summary">
                             <div>المجموع رقماً: <span>${active ? sumDigitsStr : '-'}</span></div>
                             <div>المجموع كتابةً: <span>${active ? sumWordsStr : '-'}</span></div>
                             <div>المعدل النهائي (رقماً): <span style="color:#0d2c54;">${active ? avgDigitsStr : '-'}</span></div>
-                            
                             <div style="text-align: center; min-width: 200px;">
                                 النتيجة: <span class="${(cardStatusTxt === 'مكمل' || cardStatusTxt === 'راسب') ? 'card-text-fail' : ''}" style="font-size:16px; display:block;">${cardStatusTxt}</span>
                                 ${failSubjectsMiniHtml}
@@ -886,7 +974,10 @@ value=" "> </option>
             document.getElementById('managerTitle').value = f.title || "اسم المرشد";
             renderTableStructures(); loadCurrentGroupData();
         }
-        window.onclick = function(e) { if(e.target == document.getElementById('importModal')) closeImportModal(); }
+        window.onclick = function(e) { 
+            if(e.target == document.getElementById('importModal')) closeImportModal(); 
+            if(e.target == document.getElementById('migrationModal')) closeMigrationModal(); 
+        }
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
     </script>
 </body>
