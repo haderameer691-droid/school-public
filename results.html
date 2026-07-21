@@ -36,7 +36,7 @@
             font-weight: bold; 
             flex: 1; 
             text-align: right; 
-            margin-top: 22px; /* تم زيادة المساحة العلوية للإنزال البصري */
+            margin-top: 15px; /* تم زيادة المساحة العلوية للإنزال البصري */
         }
         /* تعديل الصف والشعبة لتكون بمحاذاة اليمين تماماً في الواجهة */
         .header-left { 
@@ -69,7 +69,7 @@
             border-bottom: 1px dashed #000;
             color: #0056b3;
             background: transparent;
-            width: 160px;
+            width: 250px;
             padding: 2px;
             text-align: center;
         }
@@ -311,14 +311,15 @@
         <div class="new-header-container">
             <div class="header-right">
                 <div class="header-row-inline">
-                    <span>إدارة مدرسة: </span>
-                    <input type="text" id="schoolName" class="editable-input-header" value="اسم المدرسة" onchange="saveSchoolInfo()">
+                    <span>إدارة مدرسة</span>
+                  <br>
+                    <input type="text" id="schoolName" class="editable-input-header"value="اسم المدرسة"onchange="saveSchoolInfo()">
                 </div>
             </div>
             
             <div class="header-center">
                 <div class="header-row-inline">
-                    <span>نتائج امتحانات: </span>
+                    <span>نتائج امتحانات </span>
                     <select id="examTypeSelect" class="custom-select" onchange="onExamTypeOrRoleOrClassChange()">
                         <option value="الفصل الأول">الفصل الأول</option>
                         <option value="نصف السنة" selected>نصف السنة</option>
@@ -327,11 +328,11 @@
                     </select>
                 </div>
                 <div class="header-row-inline" style="margin: 3px 0;">
-                    <span>العام الدراسي: </span>
+                    <span>العام الدراسي </span>
                     <input type="text" id="schoolYear" class="editable-input-header" style="width: 100px; text-align: center;" value="٢٠٢٥ - ٢٠٢٦" onchange="saveSchoolInfo()">
                 </div>
                 <div class="header-row-inline">
-                    <span>الدور / الشهر: </span>
+                    <span>الدور / الشهر </span>
                     <select id="examRoleSelect" class="custom-select" onchange="onExamTypeOrRoleOrClassChange()">
                         <option value="الاول" selected>الاول</option>
                         <option value="الثاني">الثاني</option>
@@ -349,7 +350,7 @@
             
             <div class="header-left">
                 <div class="header-row-inline">
-                    <span>الصف: </span>
+                    <span>الصف / </span>
                     <select id="classSelect" class="custom-select" onchange="onClassOrDivisionChange()">
                         <option value="الأول الابتدائي" selected>الأول الابتدائي</option>
                         <option value="الثاني الابتدائي">الثاني الابتدائي</option>
@@ -360,7 +361,7 @@
                     </select>
                 </div>
                 <div class="header-row-inline" style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
-                    <span>الشعبة: </span>
+                    <span>الشعبة / </span>
                     <select id="divisionSelect" class="custom-select" onchange="onClassOrDivisionChange()">
                         <option value="أ" selected>أ</option>
                         <option value="ب">ب</option>
@@ -1154,7 +1155,7 @@
                                 <p>الدور / الشهر: ${examRole}</p>
                             </div>
                             <div class="card-header-left">
-                                <span>مدرسة: ${schoolName}</span>
+                                <span>مدرسة<br> ${schoolName} </span>
                             </div>
                         </div>
                         <div class="card-info-grid">
