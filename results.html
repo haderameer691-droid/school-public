@@ -125,6 +125,7 @@
         .btn-clear-all { background-color: #b7791f; color: white; }
         .btn-migrate { background-color: #0056b3; color: white; border-color: #004085; }
         .btn-delete { background-color: #dc3545; color: white; padding: 2px 6px; font-size: 11px; }
+        .btn-migrate-row { background-color: #0056b3; color: white; padding: 2px 6px; font-size: 11px; margin-left: 4px; }
         
         .save-indicator {
             display: none;
@@ -233,7 +234,7 @@
         }
         
         /* تنسيقات كروت الطباعة */
-        #cardsContainer { display: none; background-color:  #146c6c; padding: 20px; }
+        #cardsContainer { display: none; background-color: #146c6c; padding: 20px; }
         .report-card {
             font-family: 'Cairo', sans-serif;
             background: #fff; border: 10px solid #2c3e50; border-radius: 12px; padding: 30px 35px; margin: 0 auto 30px auto;
@@ -242,7 +243,7 @@
         }
         .report-card * { font-weight: bold !important; }
         
-        .card-header-new { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; width: 100%; }
+        .card-header-new { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; width: 100%; }
         .card-header-right { text-align: center; font-size: 15px; line-height: 1.6; color: #000; flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
         .card-header-left { text-align: center; font-size: 16px; color: #000; flex: 1; display: flex; flex-direction: column; align-items: flex-end; }
         
@@ -257,7 +258,7 @@
         .card-info-item span { border-bottom: 1.5px solid #000; padding: 0 5px; color: #0056b3; }
         
         .card-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: center; border: 2.5px solid #1a252f; }
-        .card-table th { background-color: #2c3e50; color: white; font-size: 16px; padding: 8px 4px; }
+        .card-table th { background-color: #570c05; color: white; font-size: 16px; padding: 8px 4px; }
         .card-table td { border: 2.5px solid #1a252f; padding: 0px 8px 0px 0px !important; height: 35px; font-size: 16px; vertical-align: middle; text-align: right; }
         
         .card-grade-highlight, .card-grade-word, .card-grade-status { text-align: center !important; padding-right: 0 !important; }
@@ -497,6 +498,43 @@
         </div>
     </div>
 
+    <!-- مودال ترحيل تلميذ واحد إلى صف وشعبة جديدة -->
+    <div id="migrateStudentModal" class="custom-modal">
+        <div class="modal-content" style="width: 40%;">
+            <h3 style="margin-top: 0; color: #0056b3;">✈️ ترحيل تلميذ إلى صف وشعبة جديدة</h3>
+            <p style="font-size: 13px; color: #555;">سيتم نقل التلميذ <b id="migrateStudentNameLabel" style="color:#0056b3;"></b> ودرجاته إلى الصف والشعبة المحددة، وحذفه من السجل الحالي:</p>
+
+            <div class="migrate-select-group">
+                <div class="migrate-select-item">
+                    <span>إلى الصف:</span>
+                    <select id="migrateStudentClassSelect" class="custom-select" style="width: 60%;">
+                        <option value="الأول الابتدائي">الأول الابتدائي</option>
+                        <option value="الثاني الابتدائي">الثاني الابتدائي</option>
+                        <option value="الثالث الابتدائي">الثالث الابتدائي</option>
+                        <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                        <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                        <option value="السادس الابتدائي">السادس الابتدائي</option>
+                    </select>
+                </div>
+                <div class="migrate-select-item">
+                    <span>إلى الشعبة:</span>
+                    <select id="migrateStudentDivisionSelect" class="custom-select" style="width: 60%;">
+                        <option value="أ">أ</option>
+                        <option value="ب">ب</option>
+                        <option value="ج">ج</option>
+                        <option value="د">د</option>
+                        <option value="بدون شعبة">بدون شعبة</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-migrate" onclick="executeSingleStudentMigration()">ترحيل التلميذ</button>
+                <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeMigrateStudentModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSubjects = [];
 
@@ -646,7 +684,7 @@
             currentSubjects.forEach(subject => {
                 headerHTML += `<th class="subject-col rotated-th"><span class="rotated-text">${subject}</span></th>`;
             });
-            headerRow.innerHTML = headerHTML + `<th>المجموع رقماً</th><th>المجموع كتابة</th><th>النتيجة</th><th style="font-size: 12px; width:120px;">مواد الإكمال</th><th class="actions-col">إجراءات</th>`;
+            headerRow.innerHTML = headerHTML + `<th>المجموع رقماً</th><th>المجموع كتابة</th><th>النتيجة</th><th style="font-size: 12px; width:120px;">مواد الإكمال</th><th class="actions-col" style="width:150px;">إجراءات</th>`;
 
             const statsContainer = document.getElementById('statsContainer');
             let statsHTML = `<table class="stats-table"><thead><tr><th style="background-color: #b3b3b3;">المادة</th>`;
@@ -878,7 +916,10 @@
                 <td class="total-words-field" style="font-weight: bold;"></td>
                 <td class="status-field"></td>
                 <td class="reappear-subjects-field" style="font-weight: bold; color: #990000; font-size: 11px;">-</td>
-                <td class="actions-col"><button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button></td>
+                <td class="actions-col">
+                    <button class="btn btn-migrate-row" onclick="openMigrateSingleModal(this)" title="ترحيل هذا التلميذ إلى صف وشعبة أخرى">✈️ ترحيل</button>
+                    <button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button>
+                </td>
             `;
             return tr;
         }
@@ -1039,6 +1080,92 @@
                 document.getElementById('divisionSelect').value = targetDiv;
                 onClassOrDivisionChange();
             }
+        }
+
+        /* دوال نافذة ترحيل تلميذ واحد */
+        let studentRowToMigrate = null;
+
+        function openMigrateSingleModal(button) {
+            const row = button.closest('tr');
+            const nameInput = row.querySelector('.student-name-input');
+            const studentName = nameInput ? nameInput.value.trim() : "";
+
+            if (studentName === "") {
+                alert("⚠️ الرجاء إدخال اسم التلميذ أولاً قبل الترحيل.");
+                return;
+            }
+
+            studentRowToMigrate = row;
+            document.getElementById('migrateStudentNameLabel').innerText = studentName;
+            document.getElementById('migrateStudentClassSelect').value = document.getElementById('classSelect').value;
+            document.getElementById('migrateStudentDivisionSelect').value = document.getElementById('divisionSelect').value;
+            document.getElementById('migrateStudentModal').style.display = 'block';
+        }
+
+        function closeMigrateStudentModal() {
+            document.getElementById('migrateStudentModal').style.display = 'none';
+            studentRowToMigrate = null;
+        }
+
+        function executeSingleStudentMigration() {
+            if (!studentRowToMigrate) return;
+
+            const targetClass = document.getElementById('migrateStudentClassSelect').value;
+            const targetDiv = document.getElementById('migrateStudentDivisionSelect').value;
+
+            const sourceClass = document.getElementById('classSelect').value;
+            const sourceDiv = document.getElementById('divisionSelect').value;
+
+            if (targetClass === sourceClass && targetDiv === sourceDiv) {
+                alert("❌ الخطأ: لقد اخترت نفس الصف ونفس الشعبة الحالية! يرجى اختيار صف أو شعبة مختلفة للترحيل.");
+                return;
+            }
+
+            const nameInput = studentRowToMigrate.querySelector('.student-name-input');
+            const idInput = studentRowToMigrate.querySelector('.student-id-input');
+            const studentName = nameInput ? nameInput.value.trim() : "";
+            const studentId = idInput ? idInput.value.trim() : "";
+
+            if (studentName === "") {
+                alert("⚠️ لا يوجد اسم صالح لهذا التلميذ لترحيله.");
+                return;
+            }
+
+            const grades = [];
+            studentRowToMigrate.querySelectorAll('.grade-input-field').forEach(input => {
+                grades.push(input.value.trim());
+            });
+
+            if (!confirm(`هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`)) {
+                return;
+            }
+
+            // إضافة التلميذ إلى قوائم الصف والشعبة الجديدة دون حذف من هم موجودون هناك مسبقاً
+            const targetNamesKey = `studentsNamesOnlyData_${targetClass}__${targetDiv}`;
+            const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
+            const targetGradesKey = `studentsGradesData_${targetClass}__${targetDiv}__${examType}__${examRole}`;
+
+            const existingTargetNames = localStorage.getItem(targetNamesKey);
+            const targetNamesData = existingTargetNames ? JSON.parse(existingTargetNames) : [];
+
+            const existingTargetGrades = localStorage.getItem(targetGradesKey);
+            const targetGradesData = existingTargetGrades ? JSON.parse(existingTargetGrades) : [];
+
+            targetNamesData.push({ id: studentId, name: studentName });
+            targetGradesData.push({ id: studentId, grades: grades });
+
+            localStorage.setItem(targetNamesKey, JSON.stringify(targetNamesData));
+            localStorage.setItem(targetGradesKey, JSON.stringify(targetGradesData));
+
+            // حذف التلميذ من السجل الحالي بعد ترحيله بنجاح
+            studentRowToMigrate.remove();
+            updateRowIndices();
+            calculateResults();
+            saveAllStudentsData();
+
+            alert(`✅ تم ترحيل التلميذ "${studentName}" بنجاح إلى [${targetClass} - شعبة ${targetDiv}].`);
+            closeMigrateStudentModal();
         }
 
         function processPastedData() {
@@ -1322,8 +1449,10 @@
         window.onclick = function(event) {
             const importModal = document.getElementById('importModal');
             const migrateModal = document.getElementById('migrateModal');
+            const migrateStudentModal = document.getElementById('migrateStudentModal');
             if (event.target == importModal) closeImportModal();
             if (event.target == migrateModal) closeMigrateModal();
+            if (event.target == migrateStudentModal) closeMigrateStudentModal();
         }
         document.addEventListener('DOMContentLoaded', loadSavedSystemConfig);
     </script>
