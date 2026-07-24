@@ -36,6 +36,7 @@
         .btn-clear-grades { background-color: #fd7e14; color: white; }
         .btn-clear-all { background-color: #dc3545; color: white; }
         .btn-delete { background-color: #dc3545; color: white; padding: 2px 6px; font-size: 11px; border: 1px solid #000; font-weight: 600; }
+        .btn-migrate-row { background-color: #6f42c1; color: white; padding: 2px 6px; font-size: 11px; border: 1px solid #000; font-weight: 600; margin-left: 4px; }
         .save-indicator { display: none; background-color: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; border: 2px solid #155724; }
         .search-input { font-family: 'Cairo', sans-serif; font-weight: 600; padding: 5px 10px; border: 2px solid #000; border-radius: 4px; width: 220px; }
         
@@ -314,6 +315,36 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         </div>
     </div>
 
+    <!-- نافذة ترحيل تلميذ واحد إلى صف وشعبة جديدة -->
+    <div id="migrateStudentModal" class="custom-modal">
+        <div class="modal-content" style="width: 40%;">
+            <h3 style="font-weight: 700; color: #6f42c1;">✈️ ترحيل تلميذ إلى صف وشعبة جديدة</h3>
+            <hr style="border: 1px solid #000;">
+            <p style="font-size: 13px; color: #555; font-weight: 500;">سيتم نقل التلميذ <b id="migrateStudentNameLabel" style="color:#6f42c1;"></b> ودرجاته إلى الصف والشعبة المحددة، وحذفه من السجل الحالي:</p>
+
+            <div style="display: flex; gap: 10px; margin: 15px 0;">
+                <select id="migrateStudentClassSelect" class="custom-select" style="flex: 1;">
+                    <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                    <option value="السادس الابتدائي">السادس الابتدائي</option>
+                </select>
+                <select id="migrateStudentDivisionSelect" class="custom-select" style="width: 120px;">
+                    <option value="بدون شعبة">بدون شعبة</option>
+                    <option value="أ">أ</option>
+                    <option value="ب">ب</option>
+                    <option value="ج">ج</option>
+                    <option value="د">د</option>
+                </select>
+            </div>
+
+            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: سيُنقل التلميذ بدرجاته إلى السجل الجديد، وستُضاف بياناته إلى من هم موجودون فيه دون حذفهم.</p>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-migrate" onclick="executeSingleStudentMigration()">ترحيل التلميذ</button>
+                <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeMigrateStudentModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const currentSubjects = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
 
@@ -409,7 +440,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         function renderTableStructures() {
             let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
             currentSubjects.forEach(s => { html += `<th class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
-            html += `<th>المجموع رقمًا</th><th style="width:130px;">المجموع كتابةً</th><th>النتيجة</th><th style="width:130px;">دروس الإكمال</th><th class="actions-col">إجراءات</th>`;
+            html += `<th>المجموع رقمًا</th><th style="width:130px;">المجموع كتابةً</th><th>النتيجة</th><th style="width:130px;">دروس الإكمال</th><th class="actions-col" style="width:150px;">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
         }
 
@@ -460,7 +491,10 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 <td class="calc-sum-word"></td>
                 <td class="calc-status">-</td>
                 <td class="calc-fail-list">-</td>
-                <td class="actions-col"><button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button></td>
+                <td class="actions-col">
+                    <button class="btn btn-migrate-row" onclick="openMigrateSingleModal(this)" title="ترحيل هذا التلميذ إلى صف وشعبة أخرى">✈️ ترحيل</button>
+                    <button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button>
+                </td>
             `;
             return tr;
         }
@@ -724,6 +758,89 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             }
         }
 
+        /* نافذة ترحيل تلميذ واحد */
+        let studentRowToMigrate = null;
+
+        function openMigrateSingleModal(button) {
+            const row = button.closest('tr');
+            const nameInput = row.querySelector('.student-name-input');
+            const studentName = nameInput ? nameInput.value.trim() : "";
+
+            if (studentName === "") {
+                alert("⚠️ الرجاء إدخال اسم التلميذ أولاً قبل الترحيل.");
+                return;
+            }
+
+            studentRowToMigrate = row;
+            document.getElementById('migrateStudentNameLabel').innerText = studentName;
+            document.getElementById('migrateStudentClassSelect').value = document.getElementById('classSelect').value;
+            document.getElementById('migrateStudentDivisionSelect').value = document.getElementById('divisionSelect').value;
+            document.getElementById('migrateStudentModal').style.display = 'block';
+        }
+
+        function closeMigrateStudentModal() {
+            document.getElementById('migrateStudentModal').style.display = 'none';
+            studentRowToMigrate = null;
+        }
+
+        function executeSingleStudentMigration() {
+            if (!studentRowToMigrate) return;
+
+            const targetClass = document.getElementById('migrateStudentClassSelect').value;
+            const targetDivision = document.getElementById('migrateStudentDivisionSelect').value;
+
+            const currentClass = document.getElementById('classSelect').value;
+            const currentDivision = document.getElementById('divisionSelect').value;
+
+            if (targetClass === currentClass && targetDivision === currentDivision) {
+                alert("❌ لا يمكن الترحيل إلى نفس الصف والشعبة المفتوحة حالياً! الرجاء اختيار صف أو شعبة مختلفة.");
+                return;
+            }
+
+            const nameInput = studentRowToMigrate.querySelector('.student-name-input');
+            const idInput = studentRowToMigrate.querySelector('.student-id-input');
+            const studentName = nameInput ? nameInput.value.trim() : "";
+            const studentId = idInput ? idInput.value.trim() : "";
+
+            if (studentName === "") {
+                alert("⚠️ لا يوجد اسم صالح لهذا التلميذ لترحيله.");
+                return;
+            }
+
+            const gradesList = [];
+            studentRowToMigrate.querySelectorAll('.grade-input-field').forEach(input => {
+                gradesList.push(input.value.trim());
+            });
+
+            if (!confirm(`هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" من [${currentClass} - ${currentDivision}] إلى [${targetClass} - ${targetDivision}]؟`)) {
+                return;
+            }
+
+            // إضافة التلميذ إلى قوائم الصف والشعبة الجديدة دون حذف من هم موجودون هناك مسبقاً
+            const targetNamesKey = `db_${targetClass}_${targetDivision}_names`;
+            const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
+            const targetGradesKey = `db_${targetClass}_${targetDivision}_${examType}_${examRole}_grades`;
+
+            const targetNamesData = JSON.parse(localStorage.getItem(targetNamesKey) || "[]");
+            const targetGradesData = JSON.parse(localStorage.getItem(targetGradesKey) || "[]");
+
+            targetNamesData.push({ id: studentId, name: studentName });
+            targetGradesData.push({ name: studentName, grades: gradesList });
+
+            localStorage.setItem(targetNamesKey, JSON.stringify(targetNamesData));
+            localStorage.setItem(targetGradesKey, JSON.stringify(targetGradesData));
+
+            // حذف التلميذ من السجل الحالي بعد ترحيله بنجاح
+            studentRowToMigrate.remove();
+            saveAllStudentsData();
+            calculateLiveStatistics();
+            combinedSearchAndFilter();
+
+            alert(`✅ تم ترحيل التلميذ "${studentName}" بنجاح إلى [${targetClass} - ${targetDivision}].`);
+            closeMigrateStudentModal();
+        }
+
         function saveAllStudentsData() {
             const names = []; const grades = [];
             document.querySelectorAll('.student-row').forEach(row => {
@@ -977,6 +1094,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         window.onclick = function(e) { 
             if(e.target == document.getElementById('importModal')) closeImportModal(); 
             if(e.target == document.getElementById('migrationModal')) closeMigrationModal(); 
+            if(e.target == document.getElementById('migrateStudentModal')) closeMigrateStudentModal();
         }
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
     </script>
