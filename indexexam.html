@@ -41,7 +41,7 @@
             z-index: 2;
         }
 
-        /* الإطار الخارجي المزدوج الفخم (تم تقليص مسافته الخارجية إلى 0.5 سم لتوفير مساحة أمان داخلية مريحة) */
+        /* الإطار الخارجي للصفحة - الموضع والأبعاد ثابتة دائماً، ونمط الحد يتغير عبر الأصناف أدناه فقط */
         .print-border-frame {
             display: block;
             position: absolute;
@@ -49,10 +49,20 @@
             bottom: 5mm;
             left: 5mm;
             right: 5mm;
-            border: 6px double #000000; /* إطار مزدوج رسمي */
             pointer-events: none; /* لتفادي حظر النقرات على العناصر بالداخل */
             z-index: 10;
+            box-sizing: border-box;
         }
+
+        /* أنماط حد الصفحة المختلفة - صنف يُضاف على الإطار فقط، لا يغيّر أي من إعدادات الطباعة الأخرى (المقاس/الهوامش) */
+        .print-border-frame.frame-double  { border: 6px double #000000; }
+        .print-border-frame.frame-solid   { border: 4px solid #000000; }
+        .print-border-frame.frame-thick   { border: 8px solid #000000; }
+        .print-border-frame.frame-dashed  { border: 4px dashed #000000; }
+        .print-border-frame.frame-dotted  { border: 4px dotted #000000; }
+        .print-border-frame.frame-groove  { border: 8px groove #000000; }
+        .print-border-frame.frame-ridge   { border: 8px ridge #000000; }
+        .print-border-frame.frame-none    { border: none; }
 
         /* لوحة التحكم (تختفي عند الطباعة) */
         .control-panel {
@@ -388,9 +398,10 @@
                 bottom: 5mm !important;
                 left: 5mm !important;
                 right: 5mm !important;
-                border: 6px double #000000 !important;
                 box-sizing: border-box !important;
                 z-index: 9999 !important;
+                /* لا يوجد هنا فرض لنمط حد معيّن؛ يتم الاعتماد على الصنف (frame-*) المُختار من القائمة
+                   ليظهر نفس النمط المعروض على الشاشة تماماً عند الطباعة، دون التأثير في أي إعداد طباعة آخر */
             }
 
             .page-container {
@@ -522,6 +533,21 @@
                 <option value="none">❌ بدون حدود (مخطط مفتوح)</option>
             </select>
         </div>
+
+        <!-- 5. اختيار نمط حد الصفحة (الإطار الخارجي) -->
+        <div class="selector-box">
+            <label for="pageBorderSelect">🖼️ نمط حد الصفحة:</label>
+            <select id="pageBorderSelect" class="theme-select" onchange="applyPageBorderStyle(this.value)">
+                <option value="double">مزدوج رسمي (Double)</option>
+                <option value="solid">خط عادي مصمت (Solid)</option>
+                <option value="thick">خط عريض سميك (Thick)</option>
+                <option value="dashed">خط متقطع (Dashed)</option>
+                <option value="dotted">خط منقط (Dotted)</option>
+                <option value="groove">محفور بارز (Groove)</option>
+                <option value="ridge">بارز مجسم (Ridge)</option>
+                <option value="none">❌ بدون إطار للصفحة</option>
+            </select>
+        </div>
     </div>
 
     <p>📋 حددي الصفوف الدراسية النشطة لجدول الامتحان:</p>
@@ -542,14 +568,14 @@
 
 <div class="page-container" id="printablePage">
     <!-- البرواز الثابت والآمن بداخل الورقة -->
-    <div class="print-border-frame"></div>
+    <div class="print-border-frame frame-double" id="printBorderFrame"></div>
 
     <!-- رأس الصفحة -->
     <div class="header-section">
         <div class="header-right">
             <h3>
                 <span>ادارة مدرسة</span><br>
-                <input type="text" id="schoolName" class="school-name-input" placeholder="اسم المدرسة هنا">
+                <input type="text" id="schoolName" class="school-name-input" placeholder="اسم مدرسة هنا">
             </h3>
         </div>
 
@@ -625,6 +651,7 @@
     let currentDayTheme = "pink";
     let currentBorderStyle = "solid";
     let currentFont = "Cairo"; // الخط الافتراضي
+    let currentPageBorderStyle = "double"; // نمط حد الصفحة الافتراضي
 
     // دالة ترجمة أسماء الصفوف
     function getGradeDisplayName(grade) {
@@ -738,6 +765,17 @@
             table.style.borderWidth = '0px';
         } else {
             table.style.borderWidth = '3px';
+        }
+        saveData();
+    }
+
+    // تطبيق نمط حد الصفحة (الإطار الخارجي) - يغيّر فقط شكل الحد ولا يمس أي إعداد طباعة آخر (المقاس/الهوامش)
+    function applyPageBorderStyle(styleName) {
+        currentPageBorderStyle = styleName;
+        const frame = document.getElementById('printBorderFrame');
+        if (frame) {
+            frame.classList.remove('frame-double', 'frame-solid', 'frame-thick', 'frame-dashed', 'frame-dotted', 'frame-groove', 'frame-ridge', 'frame-none');
+            frame.classList.add('frame-' + styleName);
         }
         saveData();
     }
@@ -949,6 +987,7 @@
             currentDayTheme: currentDayTheme,
             currentBorderStyle: currentBorderStyle,
             currentFont: currentFont, // حفظ الخط النشط
+            currentPageBorderStyle: currentPageBorderStyle, // حفظ نمط حد الصفحة
             tableRows: []
         };
 
@@ -996,6 +1035,10 @@
 
             currentFont = data.currentFont || 'Cairo';
             document.getElementById('fontSelect').value = currentFont;
+
+            currentPageBorderStyle = data.currentPageBorderStyle || 'double';
+            document.getElementById('pageBorderSelect').value = currentPageBorderStyle;
+            applyPageBorderStyle(currentPageBorderStyle);
 
             activeGrades = data.activeGrades || ['grade1', 'grade2', 'grade3', 'grade4', 'grade5', 'grade6'];
             document.querySelectorAll('.grade-selector').forEach(checkbox => {
