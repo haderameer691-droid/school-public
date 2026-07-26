@@ -949,7 +949,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let mid = getGradeFromStorage(className, divisionName, "نصف السنة", "الأول", studentName, idx);
                     let m2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "آذار", studentName, idx)) || 0;
                     let m3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "نيسان", studentName, idx)) || 0;
-                    let fin = getGradeFromStorage(className, divisionName, "نهاية السنة", "الأول", studentName, idx);
+                    let finR1 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الأول", studentName, idx);
+                    let finR2 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الثاني", studentName, idx);
+                    let fin = (finR2 !== null) ? finR2 : finR1;
 
                     let currentRole = document.getElementById('examRoleSelect').value;
                     let currentType = document.getElementById('examTypeSelect').value;
