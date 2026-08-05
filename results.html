@@ -153,6 +153,7 @@
         .results-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; }
         .results-table th, .results-table td { border-left: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 4px; font-size: 13px; }
         .results-table th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 20; border-top: 1px solid #000; }
+        .total-sub-th { position: sticky; z-index: 19; font-size: 11px; }
         
         /* تصغير حجم نص عمود المجموع كتابة في الواجهة لمنع تمدد وارتفاع الخلايا */
         .total-words-field {
@@ -417,6 +418,7 @@
             <table class="results-table" id="resultsTable">
                 <thead>
                     <tr id="tableHeaderRow"></tr>
+                    <tr id="tableHeaderRow2"></tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
@@ -676,15 +678,24 @@
 
         function renderTableStructures() {
             const headerRow = document.getElementById('tableHeaderRow');
+            const headerRow2 = document.getElementById('tableHeaderRow2');
             let headerHTML = `
-                <th class="sticky-index-col" style="width:35px;">ت</th>
-                <th class="sticky-id-col" style="width:80px;">رقم القيد</th>
-                <th class="sticky-name-col" style="width:180px;">اسم التلميذ</th>`;
+                <th class="sticky-index-col" rowspan="2" style="width:35px;">ت</th>
+                <th class="sticky-id-col" rowspan="2" style="width:80px;">رقم القيد</th>
+                <th class="sticky-name-col" rowspan="2" style="width:180px;">اسم التلميذ</th>`;
             
             currentSubjects.forEach(subject => {
-                headerHTML += `<th class="subject-col rotated-th"><span class="rotated-text">${subject}</span></th>`;
+                headerHTML += `<th class="subject-col rotated-th" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
             });
-            headerRow.innerHTML = headerHTML + `<th>المجموع رقماً</th><th>المجموع كتابة</th><th>النتيجة</th><th style="font-size: 12px; width:120px;">مواد الإكمال</th><th class="actions-col" style="width:150px;">إجراءات</th>`;
+            headerRow.innerHTML = headerHTML + `<th colspan="2">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="font-size: 12px; width:120px;">مواد الإكمال</th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
+            headerRow2.innerHTML = `<th class="total-sub-th">رقماً</th><th class="total-sub-th">كتابة</th>`;
+
+            requestAnimationFrame(() => {
+                const row1Height = headerRow.getBoundingClientRect().height;
+                headerRow2.querySelectorAll('.total-sub-th').forEach(th => {
+                    th.style.top = row1Height + 'px';
+                });
+            });
 
             const statsContainer = document.getElementById('statsContainer');
             let statsHTML = `<table class="stats-table"><thead><tr><th style="background-color: #b3b3b3;">المادة</th>`;
