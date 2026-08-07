@@ -237,8 +237,38 @@
             text-align: center;
         }
         .text-date-input {
-            width: 135px;
+            width: 100%;
             text-align: right;
+        }
+
+        /* غلاف حقل التاريخ (النص + زر التقويم + منتقي التاريخ المخفي) */
+        .date-field-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            width: 135px;
+        }
+        .calendar-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1;
+            flex-shrink: 0;
+            filter: grayscale(0.2);
+        }
+        .calendar-btn:hover {
+            transform: scale(1.15);
+        }
+        /* منتقي التاريخ الفعلي: موجود ومرسوم فعلياً (opacity 0) حتى تعمل showPicker، لكنه غير مرئي وبلا مساحة تُذكر */
+        .date-picker-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+            border: none;
         }
 
         /* تنسيق الجدول */
@@ -287,7 +317,7 @@
         }
 
         .day-select, .row-date-input {
-            width: 98%;
+            width: 100%;
             padding: 4px;
             border: none;
             font-family: inherit;
@@ -307,6 +337,14 @@
         .row-date-input {
             font-size: 20px !important;
             font-weight: 900 !important;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* غلاف تاريخ الصف داخل الجدول يمتد بعرض الخلية بالكامل */
+        td.date-col .date-field-wrapper {
+            width: 100%;
+            justify-content: center;
         }
 
         /* تذييل الصفحة */
@@ -418,6 +456,9 @@
                 background: transparent !important;
             }
             .control-panel {
+                display: none !important;
+            }
+            .calendar-btn, .date-picker-hidden {
                 display: none !important;
             }
             .info-input, .school-name-input, .number-input, .text-date-input {
@@ -588,7 +629,13 @@
 
         <div class="header-left">
             <p>العدد / <input type="text" id="docNumber" class="number-input" placeholder="الرقم هنا"></p>
-            <p>التاريخ: <input type="text" id="headerDate" class="text-date-input" placeholder="٢٠٢٦/٠٧/١٥"></p>
+            <p>التاريخ: 
+                <span class="date-field-wrapper">
+                    <input type="text" id="headerDate" class="text-date-input" placeholder="٢٠٢٦/٠٧/١٥">
+                    <button type="button" class="calendar-btn" title="اختيار من التقويم" onclick="openDatePicker(this)">📅</button>
+                    <input type="date" class="date-picker-hidden" onchange="onDatePicked(this)">
+                </span>
+            </p>
         </div>
     </div>
 
@@ -681,6 +728,81 @@
         return str.replace(/[0-9]/g, function (w) {
             return arabicNorm[+w];
         });
+    }
+
+    // فتح منتقي التاريخ (التقويم) المرتبط بحقل تاريخ معيّن عند الضغط على زر 📅
+    function openDatePicker(btn) {
+        const wrapper = btn.closest('.date-field-wrapper');
+        if (!wrapper) return;
+        const picker = wrapper.querySelector('.date-picker-hidden');
+        if (!picker) return;
+
+        // مزامنة قيمة المنتقي مع القيمة الحالية للحقل النصي (إن كانت بصيغة سنة/شهر/يوم) قبل فتحه
+        const textInput = wrapper.querySelector('.text-date-input, .row-date-input');
+        if (textInput && textInput.value) {
+            const normalized = convertArabicNumeralsToLatin(textInput.value).replace(/\//g, '-').trim();
+            const parts = normalized.split('-');
+            if (parts.length === 3 && parts[0].length === 4) {
+                picker.value = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            }
+        }
+
+        if (typeof picker.showPicker === 'function') {
+            try { picker.showPicker(); } catch (e) { picker.focus(); picker.click(); }
+        } else {
+            picker.focus();
+            picker.click();
+        }
+    }
+
+    // عند اختيار تاريخ من التقويم: تعبئة الحقل النصي المرتبط بصيغة المشروع (سنة/شهر/يوم بأرقام عربية)
+    function onDatePicked(picker) {
+        if (!picker.value) return;
+        const wrapper = picker.closest('.date-field-wrapper');
+        if (!wrapper) return;
+        const textInput = wrapper.querySelector('.text-date-input, .row-date-input');
+        if (!textInput) return;
+
+        const [yyyy, mm, dd] = picker.value.split('-');
+        textInput.value = `${convertToArabicNumerals(yyyy)}/${convertToArabicNumerals(mm)}/${convertToArabicNumerals(dd)}`;
+        triggerSaveStatus();
+        saveData();
+    }
+
+    // دالة مساعدة: تحويل الأرقام العربية/الهندية الموجودة في نص إلى أرقام إنجليزية (لازمة لمزامنة المنتقي)
+    function convertArabicNumeralsToLatin(str) {
+        const arabicNorm = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+        return str.replace(/[٠-٩]/g, function (w) {
+            return String(arabicNorm.indexOf(w));
+        });
+    }
+
+    // دالة مساعدة: بناء غلاف حقل تاريخ الصف (نص + زر تقويم + منتقي تاريخ مخفي) لتفادي تكرار الكود
+    function createRowDateWrapper(dateValue) {
+        const wrapper = document.createElement('span');
+        wrapper.className = "date-field-wrapper";
+
+        const dateInput = document.createElement('input');
+        dateInput.type = "text";
+        dateInput.className = "row-date-input";
+        dateInput.value = dateValue;
+
+        const btn = document.createElement('button');
+        btn.type = "button";
+        btn.className = "calendar-btn";
+        btn.title = "اختيار من التقويم";
+        btn.textContent = "📅";
+        btn.setAttribute('onclick', 'openDatePicker(this)');
+
+        const picker = document.createElement('input');
+        picker.type = "date";
+        picker.className = "date-picker-hidden";
+        picker.setAttribute('onchange', 'onDatePicked(this)');
+
+        wrapper.appendChild(dateInput);
+        wrapper.appendChild(btn);
+        wrapper.appendChild(picker);
+        return wrapper;
     }
 
     // دالة التوسيع التلقائي لصندوق الملاحظات
@@ -784,7 +906,7 @@
     document.addEventListener('input', function(e) {
         const target = e.target;
         
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        if ((target.tagName === 'INPUT' && target.type !== 'date') || target.tagName === 'TEXTAREA') {
             const start = target.selectionStart;
             const end = target.selectionEnd;
             const originalVal = target.value;
@@ -881,7 +1003,11 @@
                         </select>
                     </td>
                     <td class="date-col">
-                        <input type="text" class="row-date-input" value="${selectedDate}" placeholder="٢٠٢٦/٠٧/١٥">
+                        <span class="date-field-wrapper">
+                            <input type="text" class="row-date-input" value="${selectedDate}" placeholder="٢٠٢٦/٠٧/١٥">
+                            <button type="button" class="calendar-btn" title="اختيار من التقويم" onclick="openDatePicker(this)">📅</button>
+                            <input type="date" class="date-picker-hidden" onchange="onDatePicked(this)">
+                        </span>
                     </td>
                 `;
                 
@@ -925,12 +1051,7 @@
         const dd = convertToArabicNumerals(String(today.getDate()).padStart(2, '0'));
         const defaultDateText = `${yyyy}/${mm}/${dd}`;
 
-        const dateInput = document.createElement('input');
-        dateInput.type = "text";
-        dateInput.className = "row-date-input";
-        dateInput.value = defaultDateText;
-        
-        tdDate.appendChild(dateInput);
+        tdDate.appendChild(createRowDateWrapper(defaultDateText));
         tr.appendChild(tdDate);
 
         activeGrades.forEach(() => {
@@ -1082,11 +1203,7 @@
 
                     const tdDate = document.createElement('td');
                     tdDate.className = "date-col";
-                    const dateInput = document.createElement('input');
-                    dateInput.type = "text";
-                    dateInput.className = "row-date-input";
-                    dateInput.value = rowData.date;
-                    tdDate.appendChild(dateInput);
+                    tdDate.appendChild(createRowDateWrapper(rowData.date));
                     tr.appendChild(tdDate);
 
                     rowData.subjects.forEach(subj => {
