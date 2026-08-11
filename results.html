@@ -236,6 +236,59 @@
         
         /* تنسيقات كروت الطباعة */
         #cardsContainer { display: none; background-color: #146c6c; padding: 20px; }
+
+        /* ===== سجل المكملين والراسبين ===== */
+        #reappearReportContainer { display: none; background-color: #146c6c; padding: 20px; }
+        .reappear-report-page {
+            background: #fff;
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto 20px auto;
+            padding: 1.2cm;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            font-family: 'Cairo', sans-serif;
+        }
+        .reappear-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .reappear-report-header .rr-school-name {
+            font-size: 16px;
+            font-weight: 900;
+            flex: 1;
+            text-align: right;
+        }
+        .reappear-report-header .rr-center-title {
+            flex: 1.4;
+            text-align: center;
+        }
+        .reappear-report-header .rr-center-title h2 { margin: 0 0 4px 0; font-size: 19px; }
+        .reappear-report-header .rr-center-title p { margin: 2px 0; font-size: 14px; font-weight: bold; }
+        .reappear-report-header .rr-spacer { flex: 1; }
+
+        .reappear-report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .reappear-report-table th, .reappear-report-table td { border: 1px solid #000; padding: 6px 5px; text-align: center; font-weight: bold; }
+        .reappear-report-table thead th { background-color: #0056b3 !important; color: #fff !important; font-weight: bold; }
+        .reappear-report-table td.rr-name-col { text-align: right; padding-right: 8px; }
+        .reappear-report-table td.rr-subjects-col { text-align: right; padding-right: 8px; font-size: 12px; }
+
+        .reappear-report-footer {
+            display: flex;
+            direction: ltr;
+            justify-content: flex-start;
+            margin-top: 40px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .reappear-report-footer .rr-manager-block { text-align: center; direction: rtl; }
+        .reappear-report-footer .rr-manager-block .rr-sig-line { margin-top: 35px; border-top: 1px solid #000; padding-top: 4px; width: 180px; }
+
+        .rr-empty-note { text-align: center; padding: 30px; font-weight: bold; color: #990000; }
         .report-card {
             font-family: 'Cairo', sans-serif;
             background: #fff; border: 10px solid #2c3e50; border-radius: 12px; padding: 30px 35px; margin: 0 auto 30px auto;
@@ -303,6 +356,15 @@
             body.cards-view-active #mainSystemContainer { display: none !important; }
             body.cards-view-active #cardsContainer { display: block !important; padding: 0 !important; margin: 0 !important; }
             body.cards-view-active .report-card { width: 100% !important; height: 27.5cm !important; margin: 0 0 20px 0 !important; box-shadow: none !important; background-color: #fff !important; page-break-after: always !important; page-break-inside: avoid !important; }
+
+            body.reappear-report-active { background-color: #fff !important; }
+            body.reappear-report-active @page { size: A4 portrait !important; margin: 1cm !important; }
+            body.reappear-report-active #mainSystemContainer { display: none !important; }
+            body.reappear-report-active #cardsContainer { display: none !important; }
+            body.reappear-report-active #reappearReportContainer { display: block !important; background: #fff !important; padding: 0 !important; }
+            body.reappear-report-active .reappear-report-page { width: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+            body.reappear-report-active .reappear-report-table thead { display: table-header-group; }
+            body.reappear-report-active .reappear-report-table tr { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -385,6 +447,7 @@
                     <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ واحد</button>
                     <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد التلاميذ (نسخ ولصق)</button>
                     <button class="btn btn-cards" onclick="generateReportCards()">🎴 توليد كارتات النتائج</button>
+                    <button class="btn" style="background-color: #b7791f; color: #fff;" onclick="generateReappearFailReport()">📋 طباعة سجل المكملين والراسبين (كل الصفوف)</button>
                     <button class="btn btn-print" onclick="window.print()">🖨️ طباعة الجدول الكامل</button>
                     <button class="btn btn-backup" onclick="exportFullDatabase()">💾 تصدير قاعدة بيانات</button>
                     <button class="btn btn-restore" onclick="triggerDatabaseImport()">🔄 استيراد نسخة احتياطية</button>
@@ -449,6 +512,7 @@
     </div>
 
     <div id="cardsContainer"></div>
+    <div id="reappearReportContainer"></div>
 
     <!-- مودال استيراد التلاميذ -->
     <div id="importModal" class="custom-modal">
@@ -1374,6 +1438,169 @@
         function closeCardsView() {
             document.body.classList.remove('cards-view-active');
             document.getElementById('cardsContainer').style.display = 'none';
+            document.getElementById('mainSystemContainer').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function getSubjectsForClassName(cls) {
+            if (["الأول الابتدائي", "الثاني الابتدائي"].includes(cls)) {
+                return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
+            } else if (cls === "الثالث الابتدائي") {
+                return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
+            }
+            return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
+        }
+
+        function getPassingGradeForClassName(cls) {
+            return ["الأول الابتدائي", "الثاني الابتدائي", "الثالث الابتدائي", "الرابع الابتدائي"].includes(cls) ? 5 : 50;
+        }
+
+        function evaluateStudentForReport(gradesArr, subjects, passingGrade) {
+            let studentFailCount = 0;
+            let studentEmptyCells = 0;
+            let failedSubjects = [];
+
+            subjects.forEach((subjectName, index) => {
+                let val = (gradesArr[index] !== undefined) ? String(gradesArr[index]).trim() : "";
+
+                if (val === "") { studentEmptyCells++; return; }
+
+                if (["غ", "غائب", "غائبة"].includes(val)) {
+                    studentFailCount++;
+                    failedSubjects.push(subjectName + " (غ)");
+                    return;
+                }
+
+                let grade = parseFloat(toEnglishDigits(val));
+                if (isNaN(grade)) { studentEmptyCells++; return; }
+
+                if (grade < passingGrade) {
+                    studentFailCount++;
+                    failedSubjects.push(subjectName);
+                }
+            });
+
+            if (studentEmptyCells === subjects.length) return { status: "", failedSubjects: [] };
+
+            let status = "ناجح";
+            if (studentFailCount === 0) status = "ناجح";
+            else if (studentFailCount === 1 || studentFailCount === 2) status = "مكمل";
+            else status = "راسب";
+
+            return { status, failedSubjects };
+        }
+
+        function generateReappearFailReport() {
+            const classOptions = Array.from(document.getElementById('classSelect').options).map(o => o.value);
+            const divisionOptions = Array.from(document.getElementById('divisionSelect').options).map(o => o.value);
+
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const schoolYear = document.getElementById('schoolYear').value.trim();
+            const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
+            const managerName = document.getElementById('managerName').value.trim();
+
+            let reportRows = [];
+
+            classOptions.forEach(cls => {
+                divisionOptions.forEach(div => {
+                    const namesKey = getNamesStorageKey(cls, div);
+                    const gradesKey = getGradesStorageKey(cls, div);
+
+                    const savedNames = localStorage.getItem(namesKey);
+                    const savedGrades = localStorage.getItem(gradesKey);
+                    if (!savedNames) return;
+
+                    const namesList = JSON.parse(savedNames);
+                    const gradesList = savedGrades ? JSON.parse(savedGrades) : [];
+                    if (namesList.length === 0) return;
+
+                    const subjects = getSubjectsForClassName(cls);
+                    const passingGrade = getPassingGradeForClassName(cls);
+
+                    namesList.forEach((stName, index) => {
+                        if (!stName.name || stName.name.trim() === "") return;
+                        const gradesArr = (gradesList[index] && gradesList[index].grades) ? gradesList[index].grades : [];
+                        const result = evaluateStudentForReport(gradesArr, subjects, passingGrade);
+
+                        if (result.status === "مكمل" || result.status === "راسب") {
+                            reportRows.push({
+                                name: stName.name.trim(),
+                                classDiv: div === "بدون شعبة" ? cls : `${cls} / ${div}`,
+                                subjects: result.failedSubjects.length > 0 ? result.failedSubjects.join('، ') : (result.status === "راسب" ? "جميع المواد" : "-"),
+                                status: result.status
+                            });
+                        }
+                    });
+                });
+            });
+
+            let bodyRowsHTML = "";
+            if (reportRows.length === 0) {
+                bodyRowsHTML = `<tr><td colspan="6" class="rr-empty-note">لا يوجد تلاميذ مكملون أو راسبون ضمن البيانات المسجلة حالياً</td></tr>`;
+            } else {
+                reportRows.forEach((r, idx) => {
+                    bodyRowsHTML += `
+                        <tr>
+                            <td>${toArabicDigits(idx + 1)}</td>
+                            <td class="rr-name-col">${r.name}</td>
+                            <td>${r.classDiv}</td>
+                            <td class="rr-subjects-col">${r.subjects}</td>
+                            <td style="font-weight: bold; color: ${r.status === 'راسب' ? '#990000' : '#b7791f'};">${r.status}</td>
+                            <td></td>
+                        </tr>`;
+                });
+            }
+
+            const pageHTML = `
+                <div style="text-align: center; margin-bottom: 20px;" class="no-print-btn">
+                    <button class="btn btn-print" style="padding: 12px 25px; font-size: 15px; background-color: #2c3e50; color: white;" onclick="window.print()">🖨️ طباعة السجل</button>
+                    <button class="btn" style="background-color: #6c757d; color: white; padding: 12px 25px; font-size: 15px; margin-right: 10px;" onclick="closeReappearReportView()">🔙 العودة</button>
+                </div>
+                <div class="reappear-report-page">
+                    <div class="reappear-report-header">
+                        <div class="rr-school-name">اسم المدرسة:<br>${schoolName}</div>
+                        <div class="rr-center-title">
+                            <h2>سجل المكملين</h2>
+                            <p>امتحان ${examType} الدور ${examRole}</p>
+                            <p>العام الدراسي: ${schoolYear}</p>
+                        </div>
+                        <div class="rr-spacer"></div>
+                    </div>
+                    <table class="reappear-report-table">
+                        <thead>
+                            <tr>
+                                <th style="width:5%;">ت</th>
+                                <th style="width:22%;">اسم التلميذ</th>
+                                <th style="width:15%;">الصف والشعبة</th>
+                                <th style="width:33%;">المواد المكمل فيها</th>
+                                <th style="width:10%;">النتيجة</th>
+                                <th style="width:15%;">التوقيع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${bodyRowsHTML}
+                        </tbody>
+                    </table>
+                    <div class="reappear-report-footer">
+                        <div class="rr-manager-block">
+                            <div class="rr-sig-line">مدير المدرسة / ${managerName}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.classList.add('reappear-report-active');
+            document.getElementById('mainSystemContainer').style.display = 'none';
+            const reportContainer = document.getElementById('reappearReportContainer');
+            reportContainer.innerHTML = pageHTML;
+            reportContainer.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function closeReappearReportView() {
+            document.body.classList.remove('reappear-report-active');
+            document.getElementById('reappearReportContainer').style.display = 'none';
             document.getElementById('mainSystemContainer').style.display = 'block';
             window.scrollTo(0, 0);
         }
