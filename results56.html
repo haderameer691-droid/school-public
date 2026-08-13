@@ -44,6 +44,8 @@
         .results-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; }
         .results-table th, .results-table td { border-left: 2px solid #000; border-bottom: 2px solid #000; padding: 6px 4px; font-size: 13px; font-weight: 500; color: #000; }
         .results-table th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 20; border-top: 2px solid #000; font-weight: 700; }
+        .main-header-cell { height: 30px; }
+        .sub-header-cell { position: sticky; top: 31px; z-index: 20; background-color: #f1f5f9; border-top: none !important; }
         
         .sticky-index-col { position: sticky; right: 0; background-color: #f1f5f9 !important; z-index: 22; border-right: 2px solid #000; font-weight: 700; }
         .sticky-id-col { position: sticky; right: 35px; background-color: #fff !important; z-index: 21; }
@@ -71,10 +73,10 @@
         
         .calc-status { font-weight: 700 !important; }
         
-        .status-pass { background-color: #d4edda !important; color: #155724 !important; }
-        .status-fail { background-color: #f8d7da !important; color: #721c24 !important; }
+        .status-pass { background-color: transparent !important; color: #000000 !important; font-weight: 800 !important; }
+        .status-fail { background-color: transparent !important; color: #990000 !important; font-weight: 800 !important; }
         .status-absent { background-color: #e2e3e5 !important; color: #383d41 !important; }
-        .status-com { background-color: #fff3cd !important; color: #856404 !important; }
+        .status-com { background-color: transparent !important; color: #990000 !important; font-weight: 800 !important; }
         .grade-fail-mark { background-color: transparent !important; color: #990000 !important; text-decoration: underline !important; text-decoration-color: #990000 !important; text-decoration-style: solid !important; text-decoration-thickness: 1px !important; }
 
         .rotated-th { height: 110px; vertical-align: middle !important; padding: 0 !important; }
@@ -90,6 +92,52 @@
         .total-cell-highlight { background-color: #cbd5e1 !important; }
         
         #advancedCardsContainer { display: none; background-color: #f4f6f6; padding: 15px; direction: rtl; }
+        #completionRegisterContainer { display: none; background-color: #f4f6f6; padding: 15px; direction: rtl; }
+
+        .reg-page { background: #fff; border: 3px solid #000; width: 19cm; min-height: 26cm; margin: 0 auto; padding: 20px 25px; box-sizing: border-box; color: #000; }
+        .reg-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 18px; }
+        .reg-header-right { font-size: 16px; font-weight: 800; }
+        .reg-header-center { text-align: center; flex: 1; }
+        .reg-header-center .reg-title-1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+        .reg-header-center .reg-title-2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .reg-header-center .reg-title-3 { font-size: 13px; font-weight: 700; }
+        .reg-header-left { width: 130px; }
+
+        .reg-table { width: 100%; border-collapse: collapse; font-weight: 700; }
+        .reg-table th, .reg-table td { border: 2px solid #000; padding: 6px 4px; font-size: 13px; font-weight: 700; text-align: center; color: #000; }
+        .reg-table th { background-color: #2563eb !important; color: #fff !important; font-weight: 800; }
+        .reg-table td.reg-subjects-cell { text-align: right; padding-right: 8px; font-size: 12px; }
+        .reg-table td.reg-name-cell { text-align: right; padding-right: 8px; }
+
+        .reg-footer { display: flex; justify-content: flex-start; margin-top: 30px; font-size: 14px; font-weight: 800; }
+
+        #simpleCardsContainer { display: none; background-color: #f4f6f6; padding: 15px; direction: rtl; }
+
+        .simple-report-card { font-family: 'Cairo', sans-serif; font-weight: 700; background: #fff; border: 3px solid #000; padding: 22px 30px; margin: 0 auto 25px auto; width: 720px; max-width: 100%; min-height: 920px; box-sizing: border-box; color: #000; display: flex; flex-direction: column; }
+
+        .simple-card-header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 14px; }
+        .simple-card-header-right { text-align: right; font-weight: 700; }
+        .simple-card-header-right .dept-line { font-size: 13px; font-weight: 700; }
+        .simple-card-header-right .school-line { font-size: 19px; font-weight: 800; margin-top: 3px; }
+        .simple-card-header-center-box { border: 2px solid #000; padding: 5px 8px; text-align: center; min-width: 150px; max-width: 190px; border-radius: 4px; background-color: #0b3b6c; }
+        .simple-card-header-center-box h2 { margin: 0; font-size: 13px; color: #ffffff; font-weight: 800; }
+        .simple-card-header-center-box p { margin: 3px 0 0 0; font-size: 10px; color: #ffffff; font-weight: 700; }
+        .simple-card-header-left { text-align: right; font-size: 13px; line-height: 1.7; font-weight: 700; }
+
+        .simple-card-table { table-layout: fixed; width: 100%; border-collapse: collapse; margin: 15px 0; border: 3px solid #000; flex: 1; }
+        .simple-card-table th { background-color: #63e3e4; color: #000; font-size: 16px; border: 2px solid #000; padding: 8px 4px; vertical-align: middle; text-align: center; font-weight: 800; }
+        .simple-card-table td { border: 2px solid #000; padding: 7px 4px; font-size: 17px; text-align: center; height: 36px; font-weight: 800; color: #000; }
+        .simple-subject-cell { width: 46% !important; text-align: right !important; padding-right: 16px !important; font-weight: 700; font-size: 16px !important; background-color: #ffffff !important; }
+        .simple-grade-num-cell { width: 27%; font-size: 18px !important; font-weight: 800 !important; }
+        .simple-grade-word-cell { width: 27%; font-size: 14px !important; }
+
+        .simple-card-fail { color: #990000 !important; font-weight: 800 !important; text-decoration: underline !important; text-decoration-color: #990000 !important; text-decoration-style: solid !important; text-decoration-thickness: 1px !important; }
+
+        .simple-card-summary { display: flex; justify-content: space-between; align-items: center; border: 3px solid #000; padding: 10px 16px; font-size: 14px; font-weight: 700; background-color: #f8fafc; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; border-radius: 4px; }
+        .simple-card-summary span { font-weight: 800; }
+        .simple-card-fail-line { border: 2px solid #990000; padding: 7px 14px; font-size: 13px; font-weight: 700; color: #990000; background-color: #fff5f5; margin-bottom: 10px; border-radius: 4px; line-height: 1.5; }
+        .simple-card-fail-line span { font-weight: 800; }
+        .simple-card-footer { display: flex; justify-content: space-between; width: 100%; font-size: 15px; font-weight: 800; padding-top: 12px; border-top: 2px dashed #000; margin-top: 6px; box-sizing: border-box; }
         
         .advanced-report-card { font-family: 'Cairo', sans-serif; font-weight: 600; background: #fff; border: 3px solid #000; padding: 15px 25px; margin: 0 auto 25px auto; width: 960px; height: 18.2cm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid; page-break-after: always; color: #000; }
         
@@ -146,6 +194,17 @@
             body.adv-cards-view-active @page { size: A4 landscape; margin: 0cm !important; }
             body.adv-cards-view-active .advanced-report-card { width: 960px !important; height: 18.0cm !important; margin: 0 auto !important; padding: 15px 20px !important; border: 3px solid #000 !important; page-break-before: always !important; page-break-inside: avoid !important; page-break-after: always !important; }
             .advanced-report-card:first-of-type { page-break-before: avoid !important; }
+
+            body.reg-view-active #mainSystemContainer { display: none !important; }
+            body.reg-view-active #completionRegisterContainer { display: block !important; padding: 0 !important; margin: 0 !important; }
+            body.reg-view-active @page { size: A4 portrait; margin: 1cm !important; }
+            body.reg-view-active .reg-page { width: 100% !important; min-height: 0 !important; border: 3px solid #000 !important; margin: 0 !important; }
+
+            body.simple-cards-view-active #mainSystemContainer { display: none !important; }
+            body.simple-cards-view-active #simpleCardsContainer { display: block !important; padding: 0 !important; margin: 0 !important; }
+            body.simple-cards-view-active @page { size: A4 portrait; margin: 1cm !important; }
+            body.simple-cards-view-active .simple-report-card { width: 100% !important; max-width: 100% !important; min-height: 21cm !important; margin: 0 auto !important; padding: 18px 25px !important; border: 3px solid #000 !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; overflow: visible !important; page-break-inside: avoid !important; page-break-after: always !important; }
+            .simple-report-card:last-of-type { page-break-after: avoid !important; }
         }
     </style>
 </head>
@@ -215,6 +274,9 @@
                 <button class="btn btn-restore" onclick="triggerBackupUpload()">📥 استيراد نسخة احتياطية</button>
                 <input type="file" id="backupFileInput" style="display:none" accept=".json" onchange="importFullBackup(event)">
                 <button class="btn btn-cards-advanced" onclick="generateAdvancedReportCards()">📜 بطاقة الدرجات السنوية (الكروت)</button>
+                <button class="btn btn-cards-advanced" style="background:#5b21b6;" onclick="generateFinalYearCompletionRegister()">📋 سجل المكملين والراسبين (الدرجة النهائية)</button>
+                <button class="btn btn-cards-advanced" style="background:#166534;" onclick="generateCurrentExamReportCards()">🗂️ تقرير درجات الامتحان الحالي (كروت)</button>
+                <button class="btn btn-cards-advanced" style="background:#8b0000;" onclick="generateCompletionFailureRegister()">📋 سجل المكملين والراسبين</button>
                 <button class="btn btn-print" onclick="window.print()">🖨️ طباعة السجل والاتمتة</button>
                 <button class="btn btn-clear-grades" onclick="clearOnlyGrades()">🧹 مسح الدرجات فقط</button>
                 <button class="btn btn-clear-all" onclick="clearAllData()">🗑️ تفريغ السجل الحالي</button>
@@ -241,7 +303,7 @@
 
         <div class="table-responsive">
             <table class="results-table" id="resultsTable">
-                <thead><tr id="tableHeaderRow"></tr></thead>
+                <thead><tr id="tableHeaderRow"></tr><tr id="tableHeaderRow2"></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -264,6 +326,8 @@
     </div>
 
     <div id="advancedCardsContainer"></div>
+    <div id="completionRegisterContainer"></div>
+    <div id="simpleCardsContainer"></div>
 
     <div id="importModal" class="custom-modal">
         <div class="modal-content">
@@ -439,10 +503,11 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         }
 
         function renderTableStructures() {
-            let html = `<th class="sticky-index-col" style="width: 35px;">ت</th><th class="sticky-id-col" style="width: 80px;">رقم القيد</th><th class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
-            currentSubjects.forEach(s => { html += `<th class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
-            html += `<th>المجموع رقمًا</th><th style="width:130px;">المجموع كتابةً</th><th>النتيجة</th><th style="width:130px;">دروس الإكمال</th><th class="actions-col" style="width:150px;">إجراءات</th>`;
+            let html = `<th rowspan="2" class="sticky-index-col" style="width: 35px;">ت</th><th rowspan="2" class="sticky-id-col" style="width: 80px;">رقم القيد</th><th rowspan="2" class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
+            currentSubjects.forEach(s => { html += `<th rowspan="2" class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
+            html += `<th colspan="2" class="main-header-cell">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="width:130px;">دروس الإكمال</th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
+            document.getElementById('tableHeaderRow2').innerHTML = `<th class="sub-header-cell">رقمًا</th><th class="sub-header-cell" style="width:130px;">كتابةً</th>`;
         }
 
         function getClassDivisionPrefix() {
@@ -908,8 +973,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let grades = JSON.parse(localStorage.getItem(`${prefix}_${type}_${role}_grades`) || "[]");
             let foundGradeObj = grades.find(g => g.name === studentName);
             if(foundGradeObj && foundGradeObj.grades && foundGradeObj.grades[subjectIdx] !== undefined) {
-                let val = toEnglishDigits(foundGradeObj.grades[subjectIdx]);
-                return val === "" ? null : val;
+                let raw = (foundGradeObj.grades[subjectIdx] || "").toString().trim();
+                if(raw === "") return null;
+                return toEnglishDigits(raw);
             }
             return null;
         }
@@ -943,6 +1009,25 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 let activeSubjectsCount = 0;
 
                 currentSubjects.forEach((sub, idx) => {
+                    let pt1 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
+                    let pt2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
+                    let pt3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
+                    let pmid = getGradeFromStorage(className, divisionName, "نصف السنة", "الأول", studentName, idx);
+                    let pm2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "آذار", studentName, idx)) || 0;
+                    let pm3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "نيسان", studentName, idx)) || 0;
+                    let pfinR1 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الأول", studentName, idx);
+                    let pfinR2 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الثاني", studentName, idx);
+                    let pfin = (pfinR2 !== null) ? pfinR2 : pfinR1;
+                    let pcurrentType = document.getElementById('examTypeSelect').value;
+                    let pcurrentFieldVal = row.querySelectorAll('.grade-input-field')[idx] ? toEnglishDigits(row.querySelectorAll('.grade-input-field')[idx].value.trim()) : "";
+                    if (pcurrentType === "نصف السنة" && pmid === null) pmid = pcurrentFieldVal;
+                    if (pcurrentType === "نهاية السنة" && pfin === null) pfin = pcurrentFieldVal;
+                    let pmidNum = (pmid === "غ") ? 0 : (parseFloat(pmid) || 0);
+                    let pfinNum = (pfin === "غ") ? 0 : (parseFloat(pfin) || 0);
+                    if(pt1||pt2||pt3||pmidNum||pm2||pm3||pfinNum) active = true;
+                });
+
+                currentSubjects.forEach((sub, idx) => {
                     let t1 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
                     let t2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
                     let t3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
@@ -965,8 +1050,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let isSubAbsent = (fin === "غ" || mid === "غ");
                     let midNum = (mid === "غ") ? 0 : (parseFloat(mid) || 0);
                     let finNum = (fin === "غ") ? 0 : (parseFloat(fin) || 0);
+                    let hasFinalGrade = (fin !== null); // subject only judged once its نهاية السنة grade is actually entered
 
-                    if(t1||t2||t3||midNum||m2||m3||finNum) { active = true; activeSubjectsCount++; }
+                    if(hasFinalGrade) { activeSubjectsCount++; }
 
                     let avg1 = customRoundValue((t1 + t2 + t3) / 3);
                     let avg2 = customRoundValue((m2 + m3) / 2);
@@ -974,7 +1060,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let finalG = isSubAbsent ? 0 : customRoundValue((effort + finNum) / 2);
 
                     if(isSubAbsent) { cardFailList.push(sub); } 
-                    else if(active) { if(finalG < 50) cardFailList.push(sub); sumFinal += finalG; }
+                    else if(hasFinalGrade) { if(finalG < 50) cardFailList.push(sub); }
+                    if(active && hasFinalGrade) { sumFinal += finalG; }
 
                     tableRowsHtml += `
                         <tr>
@@ -988,8 +1075,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                             <td ${m3 > 0 && m3 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(m3)}</td>
                             <td style="background:#f8fafc;" ${avg2 > 0 && avg2 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(avg2)}</td>
                             <td style="background:#f1f5f9;" ${effort > 0 && effort < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(effort)}</td>
-                            <td ${fin === "غ" ? '' : (finNum < 50 && finNum > 0 ? 'class="card-grade-fail"' : '')}>${fin === "غ" ? "غ" : toArabicDigits(finNum)}</td>
-                            <td class="${(!isSubAbsent && finalG < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent ? "غ" : toArabicDigits(finalG)}</td>
+                            <td ${fin === "غ" ? '' : (finNum < 50 && finNum > 0 ? 'class="card-grade-fail"' : '')}>${fin === "غ" ? "غ" : (fin === null ? "-" : toArabicDigits(finNum))}</td>
+                            <td class="${(!isSubAbsent && hasFinalGrade && finalG < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent ? "غ" : (hasFinalGrade ? toArabicDigits(finalG) : "-")}</td>
                         </tr>
                     `;
                 });
@@ -1071,10 +1158,379 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             window.scrollTo(0, 0);
         }
 
+        function generateCurrentExamReportCards() {
+            const rows = document.querySelectorAll('.student-row');
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const schoolYear = document.getElementById('schoolYear').value.trim();
+            const className = document.getElementById('classSelect').value;
+            const divisionName = document.getElementById('divisionSelect').value;
+            const managerName = document.getElementById('managerName').value.trim();
+            const managerTitle = document.getElementById('managerTitle').value.trim();
+            const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
+            const classDivisionLabel = (divisionName === 'بدون شعبة') ? className : `${className} / ${divisionName}`;
+
+            let validCount = 0;
+            let htmlCards = `
+                <div style="text-align: center; margin-bottom: 25px;" class="no-print-btn">
+                    <button class="btn btn-print" style="padding: 10px 30px; font-size:15px; background:#0d2c54; color:#fff;" onclick="window.print()">🖨️ طباعة الكروت</button>
+                    <button class="btn" style="background:#6c757d; color:#fff; padding:10px 30px; font-size:15px; margin-right:15px;" onclick="closeSimpleCardsView()">🔙 عودة للواجهة</button>
+                </div>
+            `;
+
+            rows.forEach(row => {
+                const nameIn = row.querySelector('.student-name-input'); if(!nameIn || nameIn.value.trim() === "") return;
+                validCount++;
+                const studentName = nameIn.value.trim();
+                const examId = row.querySelector('.student-id-input').value.trim() || '٠';
+
+                const gradeFields = row.querySelectorAll('.grade-input-field');
+                let subjectsHtml = '';
+                currentSubjects.forEach((sub, idx) => {
+                    const raw = gradeFields[idx] ? gradeFields[idx].value.trim() : '';
+                    const eng = toEnglishDigits(raw);
+                    const isAbsent = eng === "غ";
+                    const numVal = parseFloat(eng);
+                    const isFail = !isAbsent && raw !== '' && !isNaN(numVal) && numVal < 50;
+                    const roundedVal = (!isAbsent && raw !== '' && !isNaN(numVal)) ? customRoundValue(numVal) : null;
+                    const displayVal = raw === '' ? '-' : (isAbsent ? 'غ' : toArabicDigits(roundedVal));
+                    const displayWord = raw === '' ? '-' : (isAbsent ? 'غائب' : (convertTotalNumberToWords(roundedVal) || 'صفر'));
+                    const failCls = isFail || isAbsent ? ' simple-card-fail' : '';
+                    subjectsHtml += `
+                        <tr>
+                            <td class="simple-subject-cell">${sub}</td>
+                            <td class="simple-grade-num-cell${failCls}">${displayVal}</td>
+                            <td class="simple-grade-word-cell${failCls}">${displayWord}</td>
+                        </tr>
+                    `;
+                });
+
+                const sumNumCellEl = row.querySelector('.calc-sum-num');
+                const sumWordCellEl = row.querySelector('.calc-sum-word');
+                const statusCellEl = row.querySelector('.calc-status');
+                const failCellEl = row.querySelector('.calc-fail-list');
+                const sumNum = sumNumCellEl ? sumNumCellEl.innerText.trim() : '٠';
+                const sumWord = sumWordCellEl ? sumWordCellEl.innerText.trim() : '';
+                const status = statusCellEl ? statusCellEl.innerText.trim() : '-';
+                const failList = failCellEl ? failCellEl.innerText.trim() : '-';
+
+                htmlCards += `
+                    <div class="simple-report-card">
+                        <div class="simple-card-header">
+                            <div class="simple-card-header-right">
+                                <div class="dept-line">إدارة مدرسة</div>
+                                <div class="school-line">${schoolName}</div>
+                            </div>
+                            <div class="simple-card-header-center-box"><h2>${examType}</h2><p>الدور / الشهر: ${examRole}</p><p>العام الدراسي: ${schoolYear}</p></div>
+                            <div class="simple-card-header-left">اسم التلميذ: ${studentName}<br>الصف والشعبة: ${classDivisionLabel}<br>رقم القيد: ${examId}</div>
+                        </div>
+                        <table class="simple-card-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="simple-subject-cell">المادة الدراسية</th>
+                                    <th colspan="2">الدرجة</th>
+                                </tr>
+                                <tr>
+                                    <th class="simple-grade-num-cell">رقماً</th>
+                                    <th class="simple-grade-word-cell">كتابةً</th>
+                                </tr>
+                            </thead>
+                            <tbody>${subjectsHtml}</tbody>
+                        </table>
+                        <div class="simple-card-summary">
+                            <div>المجموع رقماً: <span>${sumNum}</span></div>
+                            <div>المجموع كتابةً: <span>${sumWord || '-'}</span></div>
+                            <div>النتيجة: <span>${status}</span></div>
+                        </div>
+                        <div class="simple-card-fail-line">دروس الإكمال: <span>${failList}</span></div>
+                        <div class="simple-card-footer">
+                            <div>مرشد الصف / ${managerTitle}</div>
+                            <div>مدير المدرسة / ${managerName}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(validCount === 0) { alert("⚠️ لا يوجد تلاميذ لعرض الكروت في هذه الشعبة."); return; }
+
+            document.body.classList.add('simple-cards-view-active');
+            document.getElementById('mainSystemContainer').style.display = 'none';
+            const c = document.getElementById('simpleCardsContainer'); c.innerHTML = htmlCards; c.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function closeSimpleCardsView() {
+            document.body.classList.remove('simple-cards-view-active');
+            document.getElementById('simpleCardsContainer').style.display = 'none';
+            document.getElementById('mainSystemContainer').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
         function closeAdvancedCardsView() {
             document.body.classList.remove('adv-cards-view-active');
             document.getElementById('advancedCardsContainer').style.display = 'none';
             document.getElementById('mainSystemContainer').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function computeStudentAnnualStatus(cl, div, studentName, examType, examRole) {
+            let cardFailList = [];
+            let active = false;
+
+            currentSubjects.forEach((sub, idx) => {
+                let val;
+                if(examType === "نهاية السنة") {
+                    let r1 = getGradeFromStorage(cl, div, "نهاية السنة", "الأول", studentName, idx);
+                    let r2 = getGradeFromStorage(cl, div, "نهاية السنة", "الثاني", studentName, idx);
+                    val = (r2 !== null) ? r2 : r1;
+                } else {
+                    val = getGradeFromStorage(cl, div, examType, examRole, studentName, idx);
+                }
+
+                if(val === null) return; // لم تُدخل درجة هذه المادة لهذا الامتحان بعد، تُستثنى من الحكم عليها
+                active = true;
+
+                if(val === "غ") { cardFailList.push(sub); return; }
+
+                let numVal = parseFloat(val) || 0;
+                if(numVal < 50) cardFailList.push(sub);
+            });
+
+            let statusTxt = "-";
+            if(active) {
+                if(cardFailList.length === 0) statusTxt = "ناجح";
+                else if(cardFailList.length <= 2) statusTxt = "مكمل";
+                else statusTxt = "راسب";
+            }
+            return { active, statusTxt, failList: cardFailList };
+        }
+
+        function generateCompletionFailureRegister() {
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const schoolYear = document.getElementById('schoolYear').value.trim();
+            const managerName = document.getElementById('managerName').value.trim();
+            const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
+
+            const classesList = ["الخامس الابتدائي", "السادس الابتدائي"];
+            const divisionsList = ["بدون شعبة", "أ", "ب", "ج", "د"];
+
+            let rows = [];
+            classesList.forEach(cl => {
+                divisionsList.forEach(div => {
+                    try {
+                        const names = JSON.parse(localStorage.getItem(`db_${cl}_${div}_names`) || "[]");
+                        names.forEach(n => {
+                            try {
+                                const studentName = (n && n.name || "").trim();
+                                if(!studentName) return;
+                                const result = computeStudentAnnualStatus(cl, div, studentName, examType, examRole);
+                                if(result.statusTxt === "مكمل" || result.statusTxt === "راسب") {
+                                    const divLabel = (div === "بدون شعبة") ? cl : `${cl} / ${div}`;
+                                    rows.push({ name: studentName, classDivision: divLabel, subjects: result.failList.join(" ، "), status: result.statusTxt });
+                                }
+                            } catch(errStudent) { console.error("خطأ عند معالجة تلميذ:", cl, div, n, errStudent); }
+                        });
+                    } catch(errDiv) { console.error("خطأ عند معالجة الشعبة:", cl, div, errDiv); }
+                });
+            });
+
+            let rowsHtml = '';
+            if(rows.length === 0) {
+                rowsHtml = `<tr><td colspan="6">لا يوجد تلاميذ مكملون أو راسبون حالياً</td></tr>`;
+            } else {
+                rows.forEach((r, i) => {
+                    rowsHtml += `
+                        <tr>
+                            <td>${toArabicDigits(i+1)}</td>
+                            <td class="reg-name-cell">${r.name}</td>
+                            <td>${r.classDivision}</td>
+                            <td class="reg-subjects-cell">${r.subjects || '-'}</td>
+                            <td>${r.status}</td>
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const htmlReg = `
+                <div style="text-align: center; margin-bottom: 20px;" class="no-print-btn">
+                    <button class="btn btn-print" style="padding: 10px 30px; font-size:15px; background:#0d2c54; color:#fff;" onclick="window.print()">🖨️ طباعة السجل</button>
+                    <button class="btn" style="background:#6c757d; color:#fff; padding:10px 30px; font-size:15px; margin-right:15px;" onclick="closeCompletionRegisterView()">🔙 عودة للواجهة</button>
+                </div>
+                <div class="reg-page">
+                    <div class="reg-header">
+                        <div class="reg-header-right">مدرسة ${schoolName}</div>
+                        <div class="reg-header-center">
+                            <div class="reg-title-1">سجل المكملين والراسبين</div>
+                            <div class="reg-title-2">${examType} - الدور ${examRole}</div>
+                            <div class="reg-title-3">العام الدراسي: ${schoolYear}</div>
+                        </div>
+                        <div class="reg-header-left"></div>
+                    </div>
+                    <table class="reg-table">
+                        <thead>
+                            <tr>
+                                <th style="width:35px;">ت</th>
+                                <th style="width:150px;">اسم التلميذ</th>
+                                <th style="width:120px;">الصف والشعبة</th>
+                                <th>المواد المكمل فيها</th>
+                                <th style="width:70px;">النتيجة</th>
+                                <th style="width:90px;">التوقيع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <div class="reg-footer">
+                        <div>مدير المدرسة / ${managerName}</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.classList.add('reg-view-active');
+            document.getElementById('mainSystemContainer').style.display = 'none';
+            const c = document.getElementById('completionRegisterContainer');
+            c.innerHTML = htmlReg;
+            c.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function closeCompletionRegisterView() {
+            document.body.classList.remove('reg-view-active');
+            document.getElementById('completionRegisterContainer').style.display = 'none';
+            document.getElementById('mainSystemContainer').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function computeStudentFinalYearStatus(cl, div, studentName) {
+            let cardFailList = [];
+            let active = false;
+
+            currentSubjects.forEach((sub, idx) => {
+                let t1 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
+                let t2 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
+                let t3 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
+                let mid = getGradeFromStorage(cl, div, "نصف السنة", "الأول", studentName, idx);
+                let m2 = parseFloat(getGradeFromStorage(cl, div, "الفصل الثاني", "آذار", studentName, idx)) || 0;
+                let m3 = parseFloat(getGradeFromStorage(cl, div, "الفصل الثاني", "نيسان", studentName, idx)) || 0;
+                let finR1 = getGradeFromStorage(cl, div, "نهاية السنة", "الأول", studentName, idx);
+                let finR2 = getGradeFromStorage(cl, div, "نهاية السنة", "الثاني", studentName, idx);
+                let fin = (finR2 !== null) ? finR2 : finR1;
+
+                let isSubAbsent = (fin === "غ" || mid === "غ");
+                let midNum = (mid === "غ") ? 0 : (parseFloat(mid) || 0);
+                let finNum = (fin === "غ") ? 0 : (parseFloat(fin) || 0);
+                let hasFinalGrade = (fin !== null); // subject only judged once its نهاية السنة grade is actually entered
+
+                if(hasFinalGrade || isSubAbsent) active = true;
+
+                let avg1 = customRoundValue((t1 + t2 + t3) / 3);
+                let avg2 = customRoundValue((m2 + m3) / 2);
+                let effort = customRoundValue((avg1 + midNum + avg2) / 3);
+                let finalG = isSubAbsent ? 0 : customRoundValue((effort + finNum) / 2);
+
+                if(isSubAbsent) { cardFailList.push(sub); }
+                else if(hasFinalGrade) { if(finalG < 50) cardFailList.push(sub); }
+            });
+
+            let statusTxt = "-";
+            if(active) {
+                if(cardFailList.length === 0) statusTxt = "ناجح";
+                else if(cardFailList.length <= 2) statusTxt = "مكمل";
+                else statusTxt = "راسب";
+            }
+            return { active, statusTxt, failList: cardFailList };
+        }
+
+        function generateFinalYearCompletionRegister() {
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const schoolYear = document.getElementById('schoolYear').value.trim();
+            const managerName = document.getElementById('managerName').value.trim();
+
+            const classesList = ["الخامس الابتدائي", "السادس الابتدائي"];
+            const divisionsList = ["بدون شعبة", "أ", "ب", "ج", "د"];
+
+            let rows = [];
+            classesList.forEach(cl => {
+                divisionsList.forEach(div => {
+                    try {
+                        const names = JSON.parse(localStorage.getItem(`db_${cl}_${div}_names`) || "[]");
+                        names.forEach(n => {
+                            try {
+                                const studentName = (n && n.name || "").trim();
+                                if(!studentName) return;
+                                const result = computeStudentFinalYearStatus(cl, div, studentName);
+                                if(result.statusTxt === "مكمل" || result.statusTxt === "راسب") {
+                                    const divLabel = (div === "بدون شعبة") ? cl : `${cl} / ${div}`;
+                                    rows.push({ name: studentName, classDivision: divLabel, subjects: result.failList.join(" ، "), status: result.statusTxt });
+                                }
+                            } catch(errStudent) { console.error("خطأ عند معالجة تلميذ:", cl, div, n, errStudent); }
+                        });
+                    } catch(errDiv) { console.error("خطأ عند معالجة الشعبة:", cl, div, errDiv); }
+                });
+            });
+
+            let rowsHtml = '';
+            if(rows.length === 0) {
+                rowsHtml = `<tr><td colspan="6">لا يوجد تلاميذ مكملون أو راسبون حالياً</td></tr>`;
+            } else {
+                rows.forEach((r, i) => {
+                    rowsHtml += `
+                        <tr>
+                            <td>${toArabicDigits(i+1)}</td>
+                            <td class="reg-name-cell">${r.name}</td>
+                            <td>${r.classDivision}</td>
+                            <td class="reg-subjects-cell">${r.subjects || '-'}</td>
+                            <td>${r.status}</td>
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const htmlReg = `
+                <div style="text-align: center; margin-bottom: 20px;" class="no-print-btn">
+                    <button class="btn btn-print" style="padding: 10px 30px; font-size:15px; background:#0d2c54; color:#fff;" onclick="window.print()">🖨️ طباعة السجل</button>
+                    <button class="btn" style="background:#6c757d; color:#fff; padding:10px 30px; font-size:15px; margin-right:15px;" onclick="closeCompletionRegisterView()">🔙 عودة للواجهة</button>
+                </div>
+                <div class="reg-page">
+                    <div class="reg-header">
+                        <div class="reg-header-right">مدرسة ${schoolName}</div>
+                        <div class="reg-header-center">
+                            <div class="reg-title-1">سجل المكملين والراسبين</div>
+                            <div class="reg-title-2">الدرجة النهائية السنوية</div>
+                            <div class="reg-title-3">العام الدراسي: ${schoolYear}</div>
+                        </div>
+                        <div class="reg-header-left"></div>
+                    </div>
+                    <table class="reg-table">
+                        <thead>
+                            <tr>
+                                <th style="width:35px;">ت</th>
+                                <th style="width:150px;">اسم التلميذ</th>
+                                <th style="width:120px;">الصف والشعبة</th>
+                                <th>المواد المكمل فيها</th>
+                                <th style="width:70px;">النتيجة</th>
+                                <th style="width:90px;">التوقيع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <div class="reg-footer">
+                        <div>مدير المدرسة / ${managerName}</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.classList.add('reg-view-active');
+            document.getElementById('mainSystemContainer').style.display = 'none';
+            const c = document.getElementById('completionRegisterContainer');
+            c.innerHTML = htmlReg;
+            c.style.display = 'block';
             window.scrollTo(0, 0);
         }
 
