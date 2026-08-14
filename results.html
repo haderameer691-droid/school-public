@@ -783,6 +783,7 @@
             const subjectsCount = currentSubjects.length;
             const passingGrade = getPassingGrade(); 
             const examType = document.getElementById('examTypeSelect').value;
+            const examRole = document.getElementById('examRoleSelect').value;
             
             let regCount = new Array(subjectsCount).fill(0);
             let absCount = new Array(subjectsCount).fill(0);
@@ -867,7 +868,7 @@
                 else if (studentFailCount === 1 || studentFailCount === 2) { currentStatus = "مكمل"; } 
                 else { currentStatus = "راسب"; }
 
-                if (examType === "نهاية السنة" && (currentStatus === "مكمل" || currentStatus === "راسب")) {
+                if (examType === "نهاية السنة" && examRole === "الاول" && (currentStatus === "مكمل" || currentStatus === "راسب")) {
                     totalField.innerText = "";
                     totalWordsField.innerText = "";
                 } else {
