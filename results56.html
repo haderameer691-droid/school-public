@@ -154,7 +154,7 @@
         .adv-card-table td { border: 2px solid #000; padding: 4px 2px; font-size: 14px; text-align: center; height: 35px; font-weight: 700; color: #000; }
         
         .adv-subject-cell { width: 140px !important; text-align: right !important; padding-right: 12px !important; font-weight: 700; background-color: #ede412; }
-        .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 68px !important; }
+        .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 60px !important; }
         
         .card-grade-fail { color: #990000 !important; font-weight: 700 !important; text-decoration: underline !important; text-decoration-color: #990000 !important; text-decoration-style: solid !important; text-decoration-thickness: 1px !important; }
         .card-text-fail { color: #990000 !important; font-weight: 700 !important; }
@@ -546,7 +546,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let gHtml = '';
             for(let i=0; i<currentSubjects.length; i++) {
                 let v = (student.grades && student.grades[i] !== undefined) ? student.grades[i] : "";
-                gHtml += `<td><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)" placeholder="٠"></td>`;
+                gHtml += `<td><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)"></td>`;
             }
             tr.innerHTML = `
                 <td class="row-index sticky-index-col">${toArabicDigits(idx)}</td>
@@ -574,6 +574,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
 
         function calculateLiveStatistics() {
             const isFinalYear = (document.getElementById('examTypeSelect').value === "نهاية السنة");
+            const isFinalRoleOne = (document.getElementById('examRoleSelect').value === "الأول");
             let subStats = currentSubjects.map(() => ({ total: 0, pass: 0, absent: 0, fail: 0 }));
 
             let totalStudentsInDivision = 0;
@@ -617,7 +618,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 const failCell = row.querySelector('.calc-fail-list');
 
                 if(!active) {
-                    sumNumCell.innerText = "٠"; sumWordCell.innerText = ""; statusCell.innerText = "-"; failCell.innerText = "-";
+                    sumNumCell.innerText = "-"; sumWordCell.innerText = ""; statusCell.innerText = "-"; failCell.innerText = "-";
                     statusCell.className = "calc-status"; return;
                 }
 
@@ -646,7 +647,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     totalFailInDivision++;
                 }
 
-                if(isAllAbsent || (isFinalYear && (status === "مكمل" || status === "راسب"))) {
+                if(isAllAbsent || (isFinalYear && isFinalRoleOne && (status === "مكمل" || status === "راسب"))) {
                     sumNumCell.innerText = "٠";
                     sumWordCell.innerText = ""; 
                 } else {
@@ -989,6 +990,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             const managerName = document.getElementById('managerName').value.trim();
             const managerTitle = document.getElementById('managerTitle').value.trim();
             const currentExamType = document.getElementById('examTypeSelect').value;
+            const currentExamRole = document.getElementById('examRoleSelect').value;
 
             let validCount = 0;
             let htmlCards = `
@@ -1020,32 +1022,41 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let pfin = (pfinR2 !== null) ? pfinR2 : pfinR1;
                     let pcurrentType = document.getElementById('examTypeSelect').value;
                     let pcurrentFieldVal = row.querySelectorAll('.grade-input-field')[idx] ? toEnglishDigits(row.querySelectorAll('.grade-input-field')[idx].value.trim()) : "";
-                    if (pcurrentType === "نصف السنة" && pmid === null) pmid = pcurrentFieldVal;
-                    if (pcurrentType === "نهاية السنة" && pfin === null) pfin = pcurrentFieldVal;
+                    if (pcurrentType === "نصف السنة" && pmid === null && pcurrentFieldVal !== "") pmid = pcurrentFieldVal;
+                    if (pcurrentType === "نهاية السنة" && pfin === null && pcurrentFieldVal !== "") pfin = pcurrentFieldVal;
                     let pmidNum = (pmid === "غ") ? 0 : (parseFloat(pmid) || 0);
                     let pfinNum = (pfin === "غ") ? 0 : (parseFloat(pfin) || 0);
                     if(pt1||pt2||pt3||pmidNum||pm2||pm3||pfinNum) active = true;
                 });
 
                 currentSubjects.forEach((sub, idx) => {
-                    let t1 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
-                    let t2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
-                    let t3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
+                    let rawT1 = getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx);
+                    let rawT2 = getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx);
+                    let rawT3 = getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx);
+                    let t1 = (rawT1 === "غ") ? 0 : (parseFloat(rawT1) || 0);
+                    let t2 = (rawT2 === "غ") ? 0 : (parseFloat(rawT2) || 0);
+                    let t3 = (rawT3 === "غ") ? 0 : (parseFloat(rawT3) || 0);
                     let mid = getGradeFromStorage(className, divisionName, "نصف السنة", "الأول", studentName, idx);
-                    let m2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "آذار", studentName, idx)) || 0;
-                    let m3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الثاني", "نيسان", studentName, idx)) || 0;
+                    let rawM2 = getGradeFromStorage(className, divisionName, "الفصل الثاني", "آذار", studentName, idx);
+                    let rawM3 = getGradeFromStorage(className, divisionName, "الفصل الثاني", "نيسان", studentName, idx);
+                    let m2 = (rawM2 === "غ") ? 0 : (parseFloat(rawM2) || 0);
+                    let m3 = (rawM3 === "غ") ? 0 : (parseFloat(rawM3) || 0);
                     let finR1 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الأول", studentName, idx);
                     let finR2 = getGradeFromStorage(className, divisionName, "نهاية السنة", "الثاني", studentName, idx);
                     let fin = (finR2 !== null) ? finR2 : finR1;
+                    let finR1Num = (finR1 === "غ") ? 0 : (parseFloat(finR1) || 0);
+                    let finR2Num = (finR2 === "غ") ? 0 : (parseFloat(finR2) || 0);
 
                     let currentRole = document.getElementById('examRoleSelect').value;
                     let currentType = document.getElementById('examTypeSelect').value;
                     let currentFieldVal = row.querySelectorAll('.grade-input-field')[idx] ? toEnglishDigits(row.querySelectorAll('.grade-input-field')[idx].value.trim()) : "";
 
-                    if (currentType === "نصف السنة" && mid === null) mid = currentFieldVal;
-                    if (currentType === "نهاية السنة" && fin === null) fin = currentFieldVal;
-                    if (currentType === "الفصل الثاني" && currentRole === "آذار") m2 = parseFloat(currentFieldVal) || 0;
-                    if (currentType === "الفصل الثاني" && currentRole === "نيسان") m3 = parseFloat(currentFieldVal) || 0;
+                    // مهم: لا نعوّض بقيمة الحقل الحالي إلا إذا كانت تحمل بيانات فعلية،
+                    // وإلا تتحول القيمة "لم تُدخل بعد" (null) إلى نص فارغ يُحسب خطأً كدرجة صفر
+                    if (currentType === "نصف السنة" && mid === null && currentFieldVal !== "") mid = currentFieldVal;
+                    if (currentType === "نهاية السنة" && fin === null && currentFieldVal !== "") fin = currentFieldVal;
+                    if (currentType === "الفصل الثاني" && currentRole === "آذار" && currentFieldVal !== "") { rawM2 = currentFieldVal; m2 = (currentFieldVal === "غ") ? 0 : (parseFloat(currentFieldVal) || 0); }
+                    if (currentType === "الفصل الثاني" && currentRole === "نيسان" && currentFieldVal !== "") { rawM3 = currentFieldVal; m3 = (currentFieldVal === "غ") ? 0 : (parseFloat(currentFieldVal) || 0); }
 
                     let isSubAbsent = (fin === "غ" || mid === "غ");
                     let midNum = (mid === "غ") ? 0 : (parseFloat(mid) || 0);
@@ -1053,6 +1064,10 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let hasFinalGrade = (fin !== null); // subject only judged once its نهاية السنة grade is actually entered
 
                     if(hasFinalGrade) { activeSubjectsCount++; }
+
+                    let period1AllEmpty = (rawT1 === null && rawT2 === null && rawT3 === null);
+                    let period2AllEmpty = (rawM2 === null && rawM3 === null);
+                    let effortAllEmpty = (period1AllEmpty && mid === null && period2AllEmpty);
 
                     let avg1 = customRoundValue((t1 + t2 + t3) / 3);
                     let avg2 = customRoundValue((m2 + m3) / 2);
@@ -1066,16 +1081,17 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     tableRowsHtml += `
                         <tr>
                             <td class="adv-subject-cell">${sub}</td>
-                            <td ${t1 > 0 && t1 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(t1)}</td>
-                            <td ${t2 > 0 && t2 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(t2)}</td>
-                            <td ${t3 > 0 && t3 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(t3)}</td>
-                            <td style="background:#f8fafc;" ${avg1 > 0 && avg1 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(avg1)}</td>
-                            <td ${mid === "غ" ? '' : (midNum < 50 && midNum > 0 ? 'class="card-grade-fail"' : '')}>${mid === "غ" ? "غ" : toArabicDigits(midNum)}</td>
-                            <td ${m2 > 0 && m2 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(m2)}</td>
-                            <td ${m3 > 0 && m3 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(m3)}</td>
-                            <td style="background:#f8fafc;" ${avg2 > 0 && avg2 < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(avg2)}</td>
-                            <td style="background:#f1f5f9;" ${effort > 0 && effort < 50 ? 'class="card-grade-fail"' : ''}>${toArabicDigits(effort)}</td>
-                            <td ${fin === "غ" ? '' : (finNum < 50 && finNum > 0 ? 'class="card-grade-fail"' : '')}>${fin === "غ" ? "غ" : (fin === null ? "-" : toArabicDigits(finNum))}</td>
+                            <td ${rawT1 === "غ" ? '' : (rawT1 !== null && t1 > 0 && t1 < 50 ? 'class="card-grade-fail"' : '')}>${rawT1 === "غ" ? "غ" : (rawT1 === null ? "-" : toArabicDigits(t1))}</td>
+                            <td ${rawT2 === "غ" ? '' : (rawT2 !== null && t2 > 0 && t2 < 50 ? 'class="card-grade-fail"' : '')}>${rawT2 === "غ" ? "غ" : (rawT2 === null ? "-" : toArabicDigits(t2))}</td>
+                            <td ${rawT3 === "غ" ? '' : (rawT3 !== null && t3 > 0 && t3 < 50 ? 'class="card-grade-fail"' : '')}>${rawT3 === "غ" ? "غ" : (rawT3 === null ? "-" : toArabicDigits(t3))}</td>
+                            <td style="background:#f8fafc;" ${!period1AllEmpty && avg1 > 0 && avg1 < 50 ? 'class="card-grade-fail"' : ''}>${period1AllEmpty ? "-" : toArabicDigits(avg1)}</td>
+                            <td ${mid === "غ" ? '' : (mid !== null && midNum < 50 && midNum > 0 ? 'class="card-grade-fail"' : '')}>${mid === "غ" ? "غ" : (mid === null ? "-" : toArabicDigits(midNum))}</td>
+                            <td ${rawM2 === "غ" ? '' : (rawM2 !== null && m2 > 0 && m2 < 50 ? 'class="card-grade-fail"' : '')}>${rawM2 === "غ" ? "غ" : (rawM2 === null ? "-" : toArabicDigits(m2))}</td>
+                            <td ${rawM3 === "غ" ? '' : (rawM3 !== null && m3 > 0 && m3 < 50 ? 'class="card-grade-fail"' : '')}>${rawM3 === "غ" ? "غ" : (rawM3 === null ? "-" : toArabicDigits(m3))}</td>
+                            <td style="background:#f8fafc;" ${!period2AllEmpty && avg2 > 0 && avg2 < 50 ? 'class="card-grade-fail"' : ''}>${period2AllEmpty ? "-" : toArabicDigits(avg2)}</td>
+                            <td style="background:#f1f5f9;" ${!effortAllEmpty && effort > 0 && effort < 50 ? 'class="card-grade-fail"' : ''}>${effortAllEmpty ? "-" : toArabicDigits(effort)}</td>
+                            <td ${finR1 === "غ" ? '' : (finR1Num < 50 && finR1Num > 0 ? 'class="card-grade-fail"' : '')}>${finR1 === "غ" ? "غ" : (finR1 === null ? "-" : toArabicDigits(finR1Num))}</td>
+                            <td ${finR2 === "غ" ? '' : (finR2Num < 50 && finR2Num > 0 ? 'class="card-grade-fail"' : '')}>${finR2 === "غ" ? "غ" : (finR2 === null ? "-" : toArabicDigits(finR2Num))}</td>
                             <td class="${(!isSubAbsent && hasFinalGrade && finalG < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent ? "غ" : (hasFinalGrade ? toArabicDigits(finalG) : "-")}</td>
                         </tr>
                     `;
@@ -1089,13 +1105,13 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 }
 
                 let realCardAverage = 0;
-                if(activeSubjectsCount > 0) realCardAverage = sumFinal / activeSubjectsCount;
+                if(currentSubjects.length > 0) realCardAverage = sumFinal / currentSubjects.length;
 
                 let sumDigitsStr = toArabicDigits(sumFinal);
                 let sumWordsStr = convertTotalNumberToWords(sumFinal);
                 let avgDigitsStr = forceArabicDigitsText(realCardAverage.toFixed(2));
 
-                if(currentExamType === "نهاية السنة" && (cardStatusTxt === "مكمل" || cardStatusTxt === "راسب")) {
+                if(currentExamType === "نهاية السنة" && currentExamRole === "الأول" && (cardStatusTxt === "مكمل" || cardStatusTxt === "راسب")) {
                     sumDigitsStr = "٠"; sumWordsStr = "صفر"; avgDigitsStr = "٠";
                 }
 
@@ -1125,11 +1141,11 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                                     <th colspan="2">الفصل الثاني</th>
                                     <th rowspan="2">معدل ف2</th>
                                     <th rowspan="2">السعي السنوي</th>
-                                    <th rowspan="2">نهاية السنة</th>
+                                    <th colspan="2">نهاية السنة</th>
                                     <th rowspan="2">الدرجة النهائية</th>
                                 </tr>
                                 <tr>
-                                    <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th>
+                                    <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th><th>الدور الأول</th><th>الدور الثاني</th>
                                 </tr>
                             </thead>
                             <tbody>${tableRowsHtml}</tbody>
@@ -1137,7 +1153,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                         <div class="adv-card-summary">
                             <div>المجموع رقماً: <span>${active ? sumDigitsStr : '-'}</span></div>
                             <div>المجموع كتابةً: <span>${active ? sumWordsStr : '-'}</span></div>
-                            <div>المعدل النهائي (رقماً): <span style="color:#0d2c54;">${active ? avgDigitsStr : '-'}</span></div>
+                            <div>المعدل: <span style="color:#0d2c54;">${active ? avgDigitsStr : '-'}</span></div>
                             <div style="text-align: center; min-width: 200px;">
                                 النتيجة: <span class="${(cardStatusTxt === 'مكمل' || cardStatusTxt === 'راسب') ? 'card-text-fail' : ''}" style="font-size:16px; display:block;">${cardStatusTxt}</span>
                                 ${failSubjectsMiniHtml}
