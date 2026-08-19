@@ -154,7 +154,7 @@
         .adv-card-table td { border: 2px solid #000; padding: 4px 2px; font-size: 14px; text-align: center; height: 35px; font-weight: 700; color: #000; }
         
         .adv-subject-cell { width: 140px !important; text-align: right !important; padding-right: 12px !important; font-weight: 700; background-color: #ede412; }
-        .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 60px !important; }
+        .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 59px !important; }
         
         .card-grade-fail { color: #990000 !important; font-weight: 700 !important; text-decoration: underline !important; text-decoration-color: #990000 !important; text-decoration-style: solid !important; text-decoration-thickness: 1px !important; }
         .card-text-fail { color: #990000 !important; font-weight: 700 !important; }
@@ -1074,6 +1074,16 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     let effort = customRoundValue((avg1 + midNum + avg2) / 3);
                     let finalG = isSubAbsent ? 0 : customRoundValue((effort + finNum) / 2);
 
+                    // الدرجة النهائية: من مجموع السعي السنوي مع درجة نهاية السنة (الدور الأول) ÷2 مع جبر الكسر
+                    let isSubAbsent1 = (finR1 === "غ" || mid === "غ");
+                    let hasFinalGrade1 = (finR1 !== null);
+                    let finalG1 = isSubAbsent1 ? 0 : customRoundValue((effort + finR1Num) / 2);
+
+                    // الدرجة الأخيرة: من مجموع السعي السنوي مع درجة الدور الثاني ÷2 مع جبر الكسر
+                    let isSubAbsent2 = (finR2 === "غ" || mid === "غ");
+                    let hasFinalGrade2 = (finR2 !== null);
+                    let finalG2 = isSubAbsent2 ? 0 : customRoundValue((effort + finR2Num) / 2);
+
                     if(isSubAbsent) { cardFailList.push(sub); } 
                     else if(hasFinalGrade) { if(finalG < 50) cardFailList.push(sub); }
                     if(active && hasFinalGrade) { sumFinal += finalG; }
@@ -1091,8 +1101,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                             <td style="background:#f8fafc;" ${!period2AllEmpty && avg2 > 0 && avg2 < 50 ? 'class="card-grade-fail"' : ''}>${period2AllEmpty ? "-" : toArabicDigits(avg2)}</td>
                             <td style="background:#f1f5f9;" ${!effortAllEmpty && effort > 0 && effort < 50 ? 'class="card-grade-fail"' : ''}>${effortAllEmpty ? "-" : toArabicDigits(effort)}</td>
                             <td ${finR1 === "غ" ? '' : (finR1Num < 50 && finR1Num > 0 ? 'class="card-grade-fail"' : '')}>${finR1 === "غ" ? "غ" : (finR1 === null ? "-" : toArabicDigits(finR1Num))}</td>
+                            <td class="${(!isSubAbsent1 && hasFinalGrade1 && finalG1 < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1) : "-")}</td>
                             <td ${finR2 === "غ" ? '' : (finR2Num < 50 && finR2Num > 0 ? 'class="card-grade-fail"' : '')}>${finR2 === "غ" ? "غ" : (finR2 === null ? "-" : toArabicDigits(finR2Num))}</td>
-                            <td class="${(!isSubAbsent && hasFinalGrade && finalG < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent ? "غ" : (hasFinalGrade ? toArabicDigits(finalG) : "-")}</td>
+                            <td class="${(!isSubAbsent2 && hasFinalGrade2 && finalG2 < 50) ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2) : "-")}</td>
                         </tr>
                     `;
                 });
@@ -1141,11 +1152,13 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                                     <th colspan="2">الفصل الثاني</th>
                                     <th rowspan="2">معدل ف2</th>
                                     <th rowspan="2">السعي السنوي</th>
-                                    <th colspan="2">نهاية السنة</th>
+                                    <th rowspan="2">نهاية السنة</th>
                                     <th rowspan="2">الدرجة النهائية</th>
+                                    <th rowspan="2">الدور الثاني</th>
+                                    <th rowspan="2">الدرجة الأخيرة</th>
                                 </tr>
                                 <tr>
-                                    <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th><th>الدور الأول</th><th>الدور الثاني</th>
+                                    <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th>
                                 </tr>
                             </thead>
                             <tbody>${tableRowsHtml}</tbody>
