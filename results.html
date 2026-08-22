@@ -452,7 +452,7 @@
                     <button class="btn btn-backup" onclick="exportFullDatabase()">💾 تصدير قاعدة بيانات</button>
                     <button class="btn btn-restore" onclick="triggerDatabaseImport()">🔄 استيراد نسخة احتياطية</button>
                     <input type="file" id="dbImportFile" style="display: none;" accept="*" onchange="importFullDatabase(this)">
-                    <button class="btn btn-clear-grades" onclick="clearGradesOnly()">🧹 حذف الدرجات فقط</button>
+                    <button class="btn btn-clear-grades" style="background-color: #c0392b;" onclick="clearGradesForSelected()">☑️ حذف درجات المحددين</button>
                     <button class="btn btn-clear-all" onclick="clearAllData()">🗑️ تفريغ الشعبة الحالية بالكامل</button>
                     <div id="saveIndicator" class="save-indicator">💾 تم الحفظ التلقائي بنجاح</div>
                 </div>
@@ -751,7 +751,7 @@
             currentSubjects.forEach(subject => {
                 headerHTML += `<th class="subject-col rotated-th" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
             });
-            headerRow.innerHTML = headerHTML + `<th colspan="2">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="font-size: 12px; width:120px;">مواد الإكمال</th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
+            headerRow.innerHTML = headerHTML + `<th colspan="2">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="font-size: 12px; width:120px;">مواد الإكمال</th><th rowspan="2" class="actions-col" style="width:170px;">إجراءات<br><label style="font-size:11px; font-weight:normal; display:inline-flex; align-items:center; gap:3px; margin-top:3px; cursor:pointer;"><input type="checkbox" id="selectAllRowsCheckbox" onchange="toggleSelectAllRows(this)"> تحديد الكل</label></th>`;
             headerRow2.innerHTML = `<th class="total-sub-th">رقماً</th><th class="total-sub-th">كتابة</th>`;
 
             requestAnimationFrame(() => {
@@ -993,6 +993,7 @@
                 <td class="status-field"></td>
                 <td class="reappear-subjects-field" style="font-weight: bold; color: #990000; font-size: 11px;">-</td>
                 <td class="actions-col">
+                    <input type="checkbox" class="row-select-checkbox" onchange="onRowCheckboxChange()" title="تحديد هذا التلميذ" style="width:16px; height:16px; margin-left:6px; vertical-align:middle; cursor:pointer;">
                     <button class="btn btn-migrate-row" onclick="openMigrateSingleModal(this)" title="ترحيل هذا التلميذ إلى صف وشعبة أخرى">✈️ ترحيل</button>
                     <button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button>
                 </td>
@@ -1056,16 +1057,41 @@
             }
         }
 
-        function clearGradesOnly() {
-            if (confirm("🧹 مسح درجات المواد لهذه الشعبة؟")) {
-                document.querySelectorAll('.student-row').forEach(row => {
+        function toggleSelectAllRows(checkbox) {
+            document.querySelectorAll('.row-select-checkbox').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+
+        function onRowCheckboxChange() {
+            const allBoxes = document.querySelectorAll('.row-select-checkbox');
+            const checkedBoxes = document.querySelectorAll('.row-select-checkbox:checked');
+            const selectAllBox = document.getElementById('selectAllRowsCheckbox');
+            if (selectAllBox) {
+                selectAllBox.checked = allBoxes.length > 0 && allBoxes.length === checkedBoxes.length;
+            }
+        }
+
+        function clearGradesForSelected() {
+            const checkedRows = document.querySelectorAll('.row-select-checkbox:checked');
+            if (checkedRows.length === 0) {
+                alert("⚠️ الرجاء تحديد صف واحد على الأقل (مربع التحديد في عمود الإجراءات) قبل استخدام هذا الزر.");
+                return;
+            }
+            if (confirm(`🧹 مسح درجات ${toArabicDigits(checkedRows.length)} تلميذ/ة محدد؟`)) {
+                checkedRows.forEach(cb => {
+                    const row = cb.closest('tr');
                     row.querySelectorAll('.grade-input-field').forEach(input => {
                         input.value = "";
                         input.classList.remove('fail-grade');
                     });
+                    cb.checked = false;
                 });
+                const selectAllBox = document.getElementById('selectAllRowsCheckbox');
+                if (selectAllBox) selectAllBox.checked = false;
                 calculateResults();
                 saveAllStudentsData();
+                alert("✅ تم مسح الدرجات بنجاح.");
             }
         }
 
