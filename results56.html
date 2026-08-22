@@ -172,7 +172,9 @@
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             html, body { margin: 0 !important; padding: 0 !important; background-color: #fff; color: #000; }
-            .controls-container, .actions-col, .save-indicator, .custom-modal, .no-print-btn { display: none !important; }
+            .controls-container, .actions-col, .select-col, .save-indicator, .custom-modal, .no-print-btn { display: none !important; }
+            .stats-section-title, .system-brand-label { display: none !important; }
+            body:not(.adv-cards-view-active):not(.simple-cards-view-active):not(.reg-view-active) .footer-advisor-block { display: none !important; }
             .custom-select { border: none !important; appearance: none !important; -webkit-appearance: none !important; padding: 0 !important; background: transparent !important; }
             .editable-input-header { border: none !important; }
             
@@ -278,7 +280,7 @@
                 <button class="btn btn-cards-advanced" style="background:#166534;" onclick="generateCurrentExamReportCards()">🗂️ تقرير درجات الامتحان الحالي (كروت)</button>
                 <button class="btn btn-cards-advanced" style="background:#8b0000;" onclick="generateCompletionFailureRegister()">📋 سجل المكملين والراسبين</button>
                 <button class="btn btn-print" onclick="window.print()">🖨️ طباعة السجل والاتمتة</button>
-                <button class="btn btn-clear-grades" onclick="clearOnlyGrades()">🧹 مسح الدرجات فقط</button>
+                <button class="btn btn-clear-grades" onclick="clearSelectedGrades()">🧹 مسح الدرجات للمحددين</button>
                 <button class="btn btn-clear-all" onclick="clearAllData()">🗑️ تفريغ السجل الحالي</button>
                 <div id="saveIndicator" class="save-indicator">💾 تم الحفظ التلقائي للسجل المستقل</div>
             </div>
@@ -309,7 +311,7 @@
         </div>
 
         <div class="stats-section">
-            <h3 style="margin-top: 0; border-bottom: 2px solid #000; padding-bottom: 8px; color: #0d2c54; font-weight: 700;">📊 جدول إحصاء المواد ونسب النجاح للشعبة</h3>
+            <h3 class="stats-section-title" style="margin-top: 0; border-bottom: 2px solid #000; padding-bottom: 8px; color: #0d2c54; font-weight: 700;">📊 جدول إحصاء المواد ونسب النجاح للشعبة</h3>
             <table class="stats-table">
                 <thead id="statsTableHeader"></thead>
                 <tbody id="statsTableBody"></tbody>
@@ -317,11 +319,9 @@
         </div>
 
         <div class="system-footer-view">
-            <div>منظومة النتائج الالكترونية</div>
-            <div style="display: flex; gap: 60px;">
-                <p>مرشد الصف / <input type="text" id="managerTitle" class="editable-input-header" style="width: 140px;" value="اسم المرشد" onchange="saveFooterInfo()"></p>
-                <p>مدير المدرسة / <input type="text" id="managerName" class="editable-input-header" style="width: 140px;" value="اسم المدير" onchange="saveFooterInfo()"></p>
-            </div>
+            <div class="system-brand-label">منظومة النتائج الالكترونية</div>
+            <p class="footer-advisor-block">مرشد الصف / <input type="text" id="managerTitle" class="editable-input-header" style="width: 140px;" value="اسم المرشد" onchange="saveFooterInfo()"></p>
+            <p class="footer-manager-block" style="margin-inline-start:auto;">مدير المدرسة / <input type="text" id="managerName" class="editable-input-header" style="width: 140px;" value="اسم المدير" onchange="saveFooterInfo()"></p>
         </div>
     </div>
 
@@ -505,7 +505,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         function renderTableStructures() {
             let html = `<th rowspan="2" class="sticky-index-col" style="width: 35px;">ت</th><th rowspan="2" class="sticky-id-col" style="width: 80px;">رقم القيد</th><th rowspan="2" class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
             currentSubjects.forEach(s => { html += `<th rowspan="2" class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
-            html += `<th colspan="2" class="main-header-cell">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="width:130px;">دروس الإكمال</th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
+            html += `<th colspan="2" class="main-header-cell">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="width:130px;">دروس الإكمال</th><th rowspan="2" class="select-col" style="width:45px;">تحديد<br><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllStudents(this)" title="تحديد / إلغاء تحديد الكل"></th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
             document.getElementById('tableHeaderRow2').innerHTML = `<th class="sub-header-cell">رقمًا</th><th class="sub-header-cell" style="width:130px;">كتابةً</th>`;
         }
@@ -553,10 +553,11 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 <td class="sticky-id-col id-input-cell"><input type="text" class="direct-input student-id-input" value="${student.id || ''}" oninput="saveAllStudentsData()"></td>
                 <td class="sticky-name-col name-input-cell"><input type="text" class="direct-input student-name-input" value="${student.name || ''}" oninput="saveAllStudentsData()" onchange="sortStudentsAlphabetically()"></td>
                 ${gHtml}
-                <td class="calc-sum-num">٠</td>
+                <td class="calc-sum-num">-</td>
                 <td class="calc-sum-word"></td>
                 <td class="calc-status">-</td>
                 <td class="calc-fail-list">-</td>
+                <td class="select-col" style="text-align:center;"><input type="checkbox" class="student-select-checkbox"></td>
                 <td class="actions-col">
                     <button class="btn btn-migrate-row" onclick="openMigrateSingleModal(this)" title="ترحيل هذا التلميذ إلى صف وشعبة أخرى">✈️ ترحيل</button>
                     <button class="btn btn-delete" onclick="deleteStudentRow(this)">حذف</button>
@@ -647,7 +648,10 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     totalFailInDivision++;
                 }
 
-                if(isAllAbsent || (isFinalYear && isFinalRoleOne && (status === "مكمل" || status === "راسب"))) {
+                if(isFinalYear && isFinalRoleOne && (status === "مكمل" || status === "راسب")) {
+                    sumNumCell.innerText = "";
+                    sumWordCell.innerText = "";
+                } else if(isAllAbsent) {
                     sumNumCell.innerText = "٠";
                     sumWordCell.innerText = ""; 
                 } else {
@@ -730,15 +734,45 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             }
         }
 
-        function clearOnlyGrades() {
-            if (confirm("🧹 هل أنتِ متأكدة من مسح جميع درجات امتحان/الشهر الحالي فقط؟\n(سيتم الاحتفاظ بأسماء التلاميذ وأرقام قيودهم كاملاً)")) {
-                document.querySelectorAll('.student-row').forEach(row => {
+        function toggleSelectAllStudents(masterCheckbox) {
+            document.querySelectorAll('.student-select-checkbox').forEach(cb => { cb.checked = masterCheckbox.checked; });
+        }
+
+        // تُستخدم من قبل الكروت والتقارير: تعمل على التلاميذ المحددين فقط إن وُجد تحديد، وإلا على الجميع
+        function getTargetStudentRows() {
+            const allRows = Array.from(document.querySelectorAll('.student-row'));
+            const selectedRows = allRows.filter(row => {
+                const cb = row.querySelector('.student-select-checkbox');
+                return cb && cb.checked;
+            });
+            return selectedRows.length > 0 ? selectedRows : allRows;
+        }
+
+        function clearSelectedGrades() {
+            const selectedRows = Array.from(document.querySelectorAll('.student-row')).filter(row => {
+                const cb = row.querySelector('.student-select-checkbox');
+                return cb && cb.checked;
+            });
+
+            if (selectedRows.length === 0) {
+                alert("⚠️ يرجى تحديد تلميذ واحد على الأقل من مربعات التحديد قبل المسح.");
+                return;
+            }
+
+            const countTxt = toArabicDigits(selectedRows.length);
+            if (confirm(`🧹 هل أنتِ متأكدة من مسح درجات امتحان/الشهر الحالي لعدد (${countTxt}) من التلاميذ المحددين فقط؟\n(سيتم الاحتفاظ بأسماء التلاميذ وأرقام قيودهم كاملاً)`)) {
+                selectedRows.forEach(row => {
                     row.querySelectorAll('.grade-input-field').forEach(input => {
                         input.value = ""; input.className = "direct-input grade-input-field";
                     });
+                    const cb = row.querySelector('.student-select-checkbox');
+                    if (cb) cb.checked = false;
                 });
+                const selectAllCb = document.getElementById('selectAllCheckbox');
+                if (selectAllCb) selectAllCb.checked = false;
+
                 saveAllStudentsData(); calculateLiveStatistics();
-                alert("✅ تم مسح درجات هذا الشهر فقط بنجاح.");
+                alert(`✅ تم مسح درجات هذا الشهر لعدد (${countTxt}) من التلاميذ المحددين بنجاح.`);
             }
         }
 
@@ -982,7 +1016,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         }
 
         function generateAdvancedReportCards() {
-            const rows = document.querySelectorAll('.student-row');
+            const rows = getTargetStudentRows();
+            const allRowsCount = document.querySelectorAll('.student-row').length;
+            const isSelectionMode = rows.length < allRowsCount;
             const schoolName = document.getElementById('schoolName').value.trim();
             const schoolYear = document.getElementById('schoolYear').value.trim();
             const className = document.getElementById('classSelect').value;
@@ -997,6 +1033,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 <div style="text-align: center; margin-bottom: 25px;" class="no-print-btn">
                     <button class="btn btn-print" style="padding: 10px 30px; font-size:15px; background:#0d2c54; color:#fff;" onclick="window.print()">🖨️ طباعة البطاقات السنوية</button>
                     <button class="btn" style="background:#6c757d; color:#fff; padding:10px 30px; font-size:15px; margin-right:15px;" onclick="closeAdvancedCardsView()">🔙 عودة للواجهة</button>
+                    ${isSelectionMode ? `<div style="margin-top:10px; font-weight:700; color:#166534;">✅ سيتم إنشاء البطاقات للتلاميذ المحددين فقط (${toArabicDigits(rows.length)})</div>` : ''}
                 </div>
             `;
 
@@ -1123,7 +1160,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 let avgDigitsStr = forceArabicDigitsText(realCardAverage.toFixed(2));
 
                 if(currentExamType === "نهاية السنة" && currentExamRole === "الأول" && (cardStatusTxt === "مكمل" || cardStatusTxt === "راسب")) {
-                    sumDigitsStr = "٠"; sumWordsStr = "صفر"; avgDigitsStr = "٠";
+                    sumDigitsStr = ""; sumWordsStr = ""; avgDigitsStr = "";
                 }
 
                 let failSubjectsMiniHtml = '';
@@ -1188,7 +1225,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         }
 
         function generateCurrentExamReportCards() {
-            const rows = document.querySelectorAll('.student-row');
+            const rows = getTargetStudentRows();
+            const allRowsCount = document.querySelectorAll('.student-row').length;
+            const isSelectionMode = rows.length < allRowsCount;
             const schoolName = document.getElementById('schoolName').value.trim();
             const schoolYear = document.getElementById('schoolYear').value.trim();
             const className = document.getElementById('classSelect').value;
@@ -1204,6 +1243,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 <div style="text-align: center; margin-bottom: 25px;" class="no-print-btn">
                     <button class="btn btn-print" style="padding: 10px 30px; font-size:15px; background:#0d2c54; color:#fff;" onclick="window.print()">🖨️ طباعة الكروت</button>
                     <button class="btn" style="background:#6c757d; color:#fff; padding:10px 30px; font-size:15px; margin-right:15px;" onclick="closeSimpleCardsView()">🔙 عودة للواجهة</button>
+                    ${isSelectionMode ? `<div style="margin-top:10px; font-weight:700; color:#166534;">✅ سيتم إنشاء الكروت للتلاميذ المحددين فقط (${toArabicDigits(rows.length)})</div>` : ''}
                 </div>
             `;
 
@@ -1268,7 +1308,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                         </table>
                         <div class="simple-card-summary">
                             <div>المجموع رقماً: <span>${sumNum}</span></div>
-                            <div>المجموع كتابةً: <span>${sumWord || '-'}</span></div>
+                            <div>المجموع كتابةً: <span>${sumWord}</span></div>
                             <div>النتيجة: <span>${status}</span></div>
                         </div>
                         <div class="simple-card-fail-line">دروس الإكمال: <span>${failList}</span></div>
