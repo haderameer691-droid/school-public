@@ -228,11 +228,13 @@
         }
         .print-footer-content {
             display: flex;
+            direction: ltr;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             font-size: 14px;
         }
+        .print-footer-content .lbl-manager-footer { direction: rtl; }
         
         /* تنسيقات كروت الطباعة */
         #cardsContainer { display: none; background-color: #146c6c; padding: 20px; }
@@ -493,11 +495,8 @@
         <!-- تذييل الطباعة النظيف -->
         <div class="print-footer-block">
             <div class="print-footer-content">
+                <span class="lbl-manager-footer">مدير المدرسة / <span class="lbl-manager-name"></span></span>
                 <div class="print-page-number">صفحة ١ من ١</div>
-                <div style="display: flex; gap: 50px;">
-                    <span>مرشد الصف / <span class="lbl-manager-title"></span></span>
-                    <span>مدير المدرسة / <span class="lbl-manager-name"></span></span>
-                </div>
             </div>
         </div>
 
@@ -1341,7 +1340,12 @@
         }
 
         function generateReportCards() {
-            const rows = document.querySelectorAll('.student-row');
+            const allRows = Array.from(document.querySelectorAll('.student-row'));
+            const selectedRows = allRows.filter(row => {
+                const cb = row.querySelector('.row-select-checkbox');
+                return cb && cb.checked;
+            });
+            const rows = selectedRows.length > 0 ? selectedRows : allRows;
             const schoolName = document.getElementById('schoolName').value.trim();
             const schoolYear = document.getElementById('schoolYear').value.trim();
             const examType = document.getElementById('examTypeSelect').value;
@@ -1454,6 +1458,9 @@
             });
 
             if (validStudentsCount === 0) return alert("⚠️ لا توجد بيانات تلاميذ لتوليد الكروت.");
+            document.querySelectorAll('.row-select-checkbox').forEach(cb => cb.checked = false);
+            const selectAllBox = document.getElementById('selectAllRowsCheckbox');
+            if (selectAllBox) selectAllBox.checked = false;
             document.body.classList.add('cards-view-active');
             document.getElementById('mainSystemContainer').style.display = 'none';
             const cardsContainer = document.getElementById('cardsContainer');
