@@ -582,6 +582,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let totalPassInDivision = 0;
             let totalAbsentInDivision = 0;
             let totalFailInDivision = 0;
+            let totalIncompleteInDivision = 0;
+            let totalFailOnlyInDivision = 0;
 
             document.querySelectorAll('.student-row').forEach(row => {
                 let active = false; let sumFinal = 0; let failList = [];
@@ -644,8 +646,10 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     totalAbsentInDivision++;
                 } else if(status === "ناجح") {
                     totalPassInDivision++;
+                } else if(status === "مكمل") {
+                    totalFailInDivision++; totalIncompleteInDivision++;
                 } else {
-                    totalFailInDivision++;
+                    totalFailInDivision++; totalFailOnlyInDivision++;
                 }
 
                 if(isFinalYear && isFinalRoleOne && (status === "مكمل" || status === "راسب")) {
@@ -683,7 +687,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 { label: "المشتركون", key: "total", totalVal: totalStudentsInDivision, isPct: false, highlight: false },
                 { label: "الناجحون", key: "pass", totalVal: totalPassInDivision, isPct: false, highlight: false },
                 { label: "الغائبون", key: "absent", totalVal: totalAbsentInDivision, isPct: false, highlight: false },
-                { label: "الراسبون والمكملون", key: "fail", totalVal: totalFailInDivision, isPct: false, highlight: false },
+                { label: "الراسبون", key: "fail", totalVal: totalFailOnlyInDivision, isPct: false, highlight: false },
+                { label: "المكملون", key: null, totalVal: totalIncompleteInDivision, isPct: false, highlight: false },
                 { label: "النسبة المئوية للنجاح", key: "pct", totalVal: totalPct, isPct: true, highlight: true }
             ];
 
@@ -692,7 +697,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 bodyHtml += `<tr><td class="stats-label-col">${rowConf.label}</td>`;
                 subStats.forEach(s => {
                     let val = "";
-                    if(rowConf.isPct) {
+                    if(rowConf.key === null) {
+                        val = "-";
+                    } else if(rowConf.isPct) {
                         let pct = 0;
                         if (s.total > 0) pct = customRoundValue((s.pass / s.total) * 100);
                         val = `%${toArabicDigits(pct)}`;
@@ -1522,18 +1529,31 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             const divisionsList = ["بدون شعبة", "أ", "ب", "ج", "د"];
 
             let rows = [];
+            let classDivSummaryMap = {}; // label -> {complete, fail, subjectFails: {subj:count}}
+            function ensureSummary(label) {
+                if(!classDivSummaryMap[label]) {
+                    classDivSummaryMap[label] = { complete: 0, fail: 0, subjectFails: {} };
+                    currentSubjects.forEach(s => { classDivSummaryMap[label].subjectFails[s] = 0; });
+                }
+                return classDivSummaryMap[label];
+            }
+
             classesList.forEach(cl => {
                 divisionsList.forEach(div => {
                     try {
                         const names = JSON.parse(localStorage.getItem(`db_${cl}_${div}_names`) || "[]");
+                        if(names.length === 0) return;
+                        const divLabel = (div === "بدون شعبة") ? cl : `${cl} / ${div}`;
                         names.forEach(n => {
                             try {
                                 const studentName = (n && n.name || "").trim();
                                 if(!studentName) return;
                                 const result = computeStudentFinalYearStatus(cl, div, studentName);
                                 if(result.statusTxt === "مكمل" || result.statusTxt === "راسب") {
-                                    const divLabel = (div === "بدون شعبة") ? cl : `${cl} / ${div}`;
                                     rows.push({ name: studentName, classDivision: divLabel, subjects: result.failList.join(" ، "), status: result.statusTxt });
+                                    const summary = ensureSummary(divLabel);
+                                    if(result.statusTxt === "مكمل") summary.complete++; else summary.fail++;
+                                    result.failList.forEach(subj => { summary.subjectFails[subj] = (summary.subjectFails[subj] || 0) + 1; });
                                 }
                             } catch(errStudent) { console.error("خطأ عند معالجة تلميذ:", cl, div, n, errStudent); }
                         });
@@ -1558,6 +1578,58 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     `;
                 });
             }
+
+            // إحصائية عدد المكملين وعدد الراسبين لكل صف وشعبة
+            const summaryLabels = Object.keys(classDivSummaryMap);
+            let totalCompleteAll = 0, totalFailAll = 0;
+            let summaryRowsHtml = '';
+            if(summaryLabels.length === 0) {
+                summaryRowsHtml = `<tr><td colspan="4">لا توجد بيانات</td></tr>`;
+            } else {
+                summaryLabels.forEach(label => {
+                    const s = classDivSummaryMap[label];
+                    totalCompleteAll += s.complete; totalFailAll += s.fail;
+                    summaryRowsHtml += `
+                        <tr>
+                            <td>${label}</td>
+                            <td>${toArabicDigits(s.complete)}</td>
+                            <td>${toArabicDigits(s.fail)}</td>
+                            <td>${toArabicDigits(s.complete + s.fail)}</td>
+                        </tr>
+                    `;
+                });
+            }
+            summaryRowsHtml += `
+                <tr style="background:#e2e8f0;">
+                    <td>الإجمالي الكلي</td>
+                    <td>${toArabicDigits(totalCompleteAll)}</td>
+                    <td>${toArabicDigits(totalFailAll)}</td>
+                    <td>${toArabicDigits(totalCompleteAll + totalFailAll)}</td>
+                </tr>
+            `;
+
+            // إحصائية عدد الراسبين في كل مادة دراسية لكل صف وشعبة
+            let subjectStatsRowsHtml = '';
+            if(summaryLabels.length === 0) {
+                subjectStatsRowsHtml = `<tr><td colspan="${currentSubjects.length + 1}">لا توجد بيانات</td></tr>`;
+            } else {
+                summaryLabels.forEach(label => {
+                    const s = classDivSummaryMap[label];
+                    subjectStatsRowsHtml += `<tr><td>${label}</td>`;
+                    currentSubjects.forEach(sub => {
+                        subjectStatsRowsHtml += `<td>${toArabicDigits(s.subjectFails[sub] || 0)}</td>`;
+                    });
+                    subjectStatsRowsHtml += `</tr>`;
+                });
+            }
+            let subjectTotalsRow = `<tr style="background:#e2e8f0;"><td>الإجمالي الكلي</td>`;
+            currentSubjects.forEach(sub => {
+                let subTotal = 0;
+                summaryLabels.forEach(label => { subTotal += (classDivSummaryMap[label].subjectFails[sub] || 0); });
+                subjectTotalsRow += `<td>${toArabicDigits(subTotal)}</td>`;
+            });
+            subjectTotalsRow += `</tr>`;
+            subjectStatsRowsHtml += subjectTotalsRow;
 
             const htmlReg = `
                 <div style="text-align: center; margin-bottom: 20px;" class="no-print-btn">
@@ -1589,6 +1661,35 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                             ${rowsHtml}
                         </tbody>
                     </table>
+
+                    <h3 style="margin: 20px 0 8px 0; font-size:15px; font-weight:800; border-bottom:2px solid #000; padding-bottom:5px;">📊 إحصائية عدد المكملين والراسبين حسب الصف والشعبة</h3>
+                    <table class="reg-table">
+                        <thead>
+                            <tr>
+                                <th>الصف والشعبة</th>
+                                <th>عدد المكملين</th>
+                                <th>عدد الراسبين</th>
+                                <th>المجموع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${summaryRowsHtml}
+                        </tbody>
+                    </table>
+
+                    <h3 style="margin: 20px 0 8px 0; font-size:15px; font-weight:800; border-bottom:2px solid #000; padding-bottom:5px;">📊 إحصائية عدد الراسبين في كل مادة دراسية حسب الصف والشعبة</h3>
+                    <table class="reg-table">
+                        <thead>
+                            <tr>
+                                <th>الصف والشعبة</th>
+                                ${currentSubjects.map(sub => `<th style="font-size:11px;">${sub}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${subjectStatsRowsHtml}
+                        </tbody>
+                    </table>
+
                     <div class="reg-footer">
                         <div>مدير المدرسة / ${managerName}</div>
                     </div>
