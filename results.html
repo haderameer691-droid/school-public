@@ -769,9 +769,11 @@
             currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-disabled-${idx}">٠</td>`; });
             statsHTML += `<td id="stat-absent-total">٠</td></tr><tr><td class="stats-title-col">الناجحون</td>`;
             currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-passed-${idx}">٠</td>`; });
-            statsHTML += `<td id="stat-passed-total">٠</td></tr><tr><td class="stats-title-col">الراسبون والمكملون</td>`;
+            statsHTML += `<td id="stat-passed-total">٠</td></tr><tr><td class="stats-title-col">الراسبون</td>`;
             currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-failed-${idx}">٠</td>`; });
-            statsHTML += `<td id="stat-failed-total">٠</td></tr><tr style="background-color: #f9f9f9;"><td class="stats-title-col" style="color: #0056b3;">النسبة المئوية للشعبة</td>`;
+            statsHTML += `<td id="stat-failed-total">٠</td></tr><tr><td class="stats-title-col">المكملون</td>`;
+            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-reappear-${idx}">-</td>`; });
+            statsHTML += `<td id="stat-reappear-total">٠</td></tr><tr style="background-color: #f9f9f9;"><td class="stats-title-col" style="color: #0056b3;">النسبة المئوية للشعبة</td>`;
             currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-percent-${idx}" style="color: #0056b3;">٠%</td>`; });
             statsHTML += `<td id="stat-percent-total" style="color: #0056b3;">٠%</td></tr></tbody></table>`;
             statsContainer.innerHTML = statsHTML;
@@ -788,10 +790,12 @@
             let absCount = new Array(subjectsCount).fill(0);
             let passCount = new Array(subjectsCount).fill(0);
             let failCountArr = new Array(subjectsCount).fill(0);
+            let reappearCountArr = new Array(subjectsCount).fill(0);
 
             let totalSchoolRegistered = 0;
             let totalSchoolPassed = 0;
             let totalSchoolFailed = 0;
+            let totalSchoolReappear = 0;
 
             rows.forEach(row => {
                 const nameInput = row.querySelector('.student-name-input');
@@ -804,6 +808,7 @@
                 let studentFailCount = 0;
                 let studentEmptyCells = 0;
                 let failedSubjects = [];
+                let failedSubjectIndexes = [];
 
                 gradeInputs.forEach((input, index) => {
                     let val = input.value.trim();
@@ -819,7 +824,7 @@
                     if (["غ", "غائب", "غائبة"].includes(val)) {
                         absCount[index]++;
                         studentFailCount++;
-                        failCountArr[index]++;
+                        failedSubjectIndexes.push(index);
                         failedSubjects.push(currentSubjects[index] + " (غ)");
                         input.classList.add('fail-grade');
                         return; 
@@ -838,7 +843,7 @@
                     if (grade < passingGrade) {
                         input.classList.add('fail-grade');
                         studentFailCount++;
-                        failCountArr[index]++;
+                        failedSubjectIndexes.push(index);
                         failedSubjects.push(currentSubjects[index]);
                     } else {
                         input.classList.remove('fail-grade');
@@ -884,12 +889,14 @@
                 } else if (currentStatus === "مكمل") {
                     statusField.innerText = "مكمل";
                     statusField.classList.add('status-reappear');
-                    totalSchoolFailed++;
+                    totalSchoolReappear++;
+                    failedSubjectIndexes.forEach(idx => { reappearCountArr[idx]++; });
                     reappearField.innerText = failedSubjects.join(" و ");
                 } else {
                     statusField.innerText = "راسب";
                     statusField.classList.add('status-fail');
                     totalSchoolFailed++;
+                    failedSubjectIndexes.forEach(idx => { failCountArr[idx]++; });
                     reappearField.innerText = "-";
                 }
             });
@@ -899,6 +906,7 @@
                 if (document.getElementById(`stat-disabled-${i}`)) document.getElementById(`stat-disabled-${i}`).innerText = toArabicDigits(absCount[i]);
                 if (document.getElementById(`stat-passed-${i}`)) document.getElementById(`stat-passed-${i}`).innerText = toArabicDigits(passCount[i]);
                 if (document.getElementById(`stat-failed-${i}`)) document.getElementById(`stat-failed-${i}`).innerText = toArabicDigits(failCountArr[i]);
+                if (document.getElementById(`stat-reappear-${i}`)) document.getElementById(`stat-reappear-${i}`).innerText = reappearCountArr[i] > 0 ? toArabicDigits(reappearCountArr[i]) : "-";
                 let percent = (regCount[i] > 0) ? Math.round((passCount[i] / regCount[i]) * 100) : 0;
                 if (document.getElementById(`stat-percent-${i}`)) document.getElementById(`stat-percent-${i}`).innerText = toArabicDigits(percent) + " %";
             }
@@ -906,6 +914,7 @@
             if (document.getElementById('stat-registered-total')) document.getElementById('stat-registered-total').innerText = toArabicDigits(totalSchoolRegistered);
             if (document.getElementById('stat-passed-total')) document.getElementById('stat-passed-total').innerText = toArabicDigits(totalSchoolPassed);
             if (document.getElementById('stat-failed-total')) document.getElementById('stat-failed-total').innerText = toArabicDigits(totalSchoolFailed);
+            if (document.getElementById('stat-reappear-total')) document.getElementById('stat-reappear-total').innerText = toArabicDigits(totalSchoolReappear);
 
             let totalSchoolPercent = (totalSchoolRegistered > 0) ? Math.round((totalSchoolPassed / totalSchoolRegistered) * 100) : 0;
             if (document.getElementById('stat-percent-total')) document.getElementById('stat-percent-total').innerText = toArabicDigits(totalSchoolPercent) + " %";
@@ -1493,6 +1502,7 @@
             let studentFailCount = 0;
             let studentEmptyCells = 0;
             let failedSubjects = [];
+            let failedSubjectNames = [];
 
             subjects.forEach((subjectName, index) => {
                 let val = (gradesArr[index] !== undefined) ? String(gradesArr[index]).trim() : "";
@@ -1502,6 +1512,7 @@
                 if (["غ", "غائب", "غائبة"].includes(val)) {
                     studentFailCount++;
                     failedSubjects.push(subjectName + " (غ)");
+                    failedSubjectNames.push(subjectName);
                     return;
                 }
 
@@ -1511,17 +1522,18 @@
                 if (grade < passingGrade) {
                     studentFailCount++;
                     failedSubjects.push(subjectName);
+                    failedSubjectNames.push(subjectName);
                 }
             });
 
-            if (studentEmptyCells === subjects.length) return { status: "", failedSubjects: [] };
+            if (studentEmptyCells === subjects.length) return { status: "", failedSubjects: [], failedSubjectNames: [] };
 
             let status = "ناجح";
             if (studentFailCount === 0) status = "ناجح";
             else if (studentFailCount === 1 || studentFailCount === 2) status = "مكمل";
             else status = "راسب";
 
-            return { status, failedSubjects };
+            return { status, failedSubjects, failedSubjectNames };
         }
 
         function generateReappearFailReport() {
@@ -1535,6 +1547,10 @@
             const managerName = document.getElementById('managerName').value.trim();
 
             let reportRows = [];
+            let classDivStats = {};
+            let subjectsUnion = [];
+            let grandReappear = 0;
+            let grandFail = 0;
 
             classOptions.forEach(cls => {
                 divisionOptions.forEach(div => {
@@ -1551,6 +1567,9 @@
 
                     const subjects = getSubjectsForClassName(cls);
                     const passingGrade = getPassingGradeForClassName(cls);
+                    const classDivLabel = div === "بدون شعبة" ? cls : `${cls} / ${div}`;
+
+                    subjects.forEach(s => { if (!subjectsUnion.includes(s)) subjectsUnion.push(s); });
 
                     namesList.forEach((stName, index) => {
                         if (!stName.name || stName.name.trim() === "") return;
@@ -1560,10 +1579,23 @@
                         if (result.status === "مكمل" || result.status === "راسب") {
                             reportRows.push({
                                 name: stName.name.trim(),
-                                classDiv: div === "بدون شعبة" ? cls : `${cls} / ${div}`,
+                                classDiv: classDivLabel,
                                 subjects: result.failedSubjects.length > 0 ? result.failedSubjects.join('، ') : (result.status === "راسب" ? "جميع المواد" : "-"),
                                 status: result.status
                             });
+
+                            if (!classDivStats[classDivLabel]) classDivStats[classDivLabel] = { reappear: 0, fail: 0, subjectFail: {}, subjectsList: subjects };
+
+                            if (result.status === "مكمل") {
+                                classDivStats[classDivLabel].reappear++;
+                                grandReappear++;
+                            } else {
+                                classDivStats[classDivLabel].fail++;
+                                grandFail++;
+                                result.failedSubjectNames.forEach(subjName => {
+                                    classDivStats[classDivLabel].subjectFail[subjName] = (classDivStats[classDivLabel].subjectFail[subjName] || 0) + 1;
+                                });
+                            }
                         }
                     });
                 });
@@ -1584,6 +1616,65 @@
                             <td></td>
                         </tr>`;
                 });
+            }
+
+            // ===== جدول إحصاء المكملين والراسبين حسب الشعبة =====
+            const classDivLabels = Object.keys(classDivStats);
+            let stats1RowsHTML = "";
+            if (classDivLabels.length === 0) {
+                stats1RowsHTML = `<tr><td colspan="4" class="rr-empty-note">لا توجد بيانات</td></tr>`;
+            } else {
+                classDivLabels.forEach(label => {
+                    const s = classDivStats[label];
+                    stats1RowsHTML += `
+                        <tr>
+                            <td class="rr-name-col">${label}</td>
+                            <td>${toArabicDigits(s.reappear)}</td>
+                            <td>${toArabicDigits(s.fail)}</td>
+                            <td style="font-weight:bold;">${toArabicDigits(s.reappear + s.fail)}</td>
+                        </tr>`;
+                });
+                stats1RowsHTML += `
+                    <tr style="background-color:#dbe9ff; font-weight:bold;">
+                        <td>المجموع الكلي</td>
+                        <td>${toArabicDigits(grandReappear)}</td>
+                        <td>${toArabicDigits(grandFail)}</td>
+                        <td>${toArabicDigits(grandReappear + grandFail)}</td>
+                    </tr>`;
+            }
+
+            // ===== جدول إحصاء الراسبين حسب المادة الدراسية للصف والشعبة =====
+            let stats2HeaderHTML = `<th style="width:14%;">الصف والشعبة</th>`;
+            subjectsUnion.forEach(s => { stats2HeaderHTML += `<th>${s}</th>`; });
+            stats2HeaderHTML += `<th style="width:10%;">المجموع الكلي</th>`;
+
+            let stats2RowsHTML = "";
+            if (classDivLabels.length === 0) {
+                stats2RowsHTML = `<tr><td colspan="${subjectsUnion.length + 2}" class="rr-empty-note">لا توجد بيانات</td></tr>`;
+            } else {
+                let subjectGrandTotals = {};
+                subjectsUnion.forEach(s => { subjectGrandTotals[s] = 0; });
+
+                classDivLabels.forEach(label => {
+                    const s = classDivStats[label];
+                    stats2RowsHTML += `<tr><td class="rr-name-col">${label}</td>`;
+                    subjectsUnion.forEach(subjName => {
+                        if (s.subjectsList.includes(subjName)) {
+                            const count = s.subjectFail[subjName] || 0;
+                            subjectGrandTotals[subjName] += count;
+                            stats2RowsHTML += `<td>${count > 0 ? toArabicDigits(count) : '-'}</td>`;
+                        } else {
+                            stats2RowsHTML += `<td>—</td>`;
+                        }
+                    });
+                    stats2RowsHTML += `<td style="font-weight:bold;">${toArabicDigits(s.fail)}</td></tr>`;
+                });
+
+                stats2RowsHTML += `<tr style="background-color:#dbe9ff; font-weight:bold;"><td>المجموع الكلي</td>`;
+                subjectsUnion.forEach(subjName => {
+                    stats2RowsHTML += `<td>${toArabicDigits(subjectGrandTotals[subjName])}</td>`;
+                });
+                stats2RowsHTML += `<td>${toArabicDigits(grandFail)}</td></tr>`;
             }
 
             const pageHTML = `
@@ -1616,6 +1707,34 @@
                             ${bodyRowsHTML}
                         </tbody>
                     </table>
+
+                    <h3 style="margin-top:25px; margin-bottom:8px; font-size:15px; text-align:center; background-color:#eef3f9; padding:6px; border:1px solid #000;">إحصاء التلاميذ المكملين والراسبين حسب الشعبة</h3>
+                    <table class="reappear-report-table">
+                        <thead>
+                            <tr>
+                                <th style="width:34%;">الصف والشعبة</th>
+                                <th>المكملون</th>
+                                <th>الراسبون</th>
+                                <th>المجموع الكلي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${stats1RowsHTML}
+                        </tbody>
+                    </table>
+
+                    <h3 style="margin-top:25px; margin-bottom:8px; font-size:15px; text-align:center; background-color:#eef3f9; padding:6px; border:1px solid #000;">إحصاء الراسبين حسب المادة الدراسية للصف والشعبة</h3>
+                    <table class="reappear-report-table" style="font-size:11px;">
+                        <thead>
+                            <tr>
+                                ${stats2HeaderHTML}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${stats2RowsHTML}
+                        </tbody>
+                    </table>
+
                     <div class="reappear-report-footer">
                         <div class="rr-manager-block">
                             <div class="rr-sig-line">مدير المدرسة / ${managerName}</div>
