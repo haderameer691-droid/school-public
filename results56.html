@@ -109,7 +109,7 @@
         .reg-table td.reg-subjects-cell { text-align: right; padding-right: 8px; font-size: 12px; }
         .reg-table td.reg-name-cell { text-align: right; padding-right: 8px; }
 
-        .reg-footer { display: flex; justify-content: flex-start; margin-top: 30px; font-size: 14px; font-weight: 800; }
+        .reg-footer { display: flex; justify-content: flex-end; margin-top: 30px; font-size: 14px; font-weight: 800; }
 
         #simpleCardsContainer { display: none; background-color: #f4f6f6; padding: 15px; direction: rtl; }
 
@@ -371,7 +371,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 <p id="migrationDestLabel" style="margin: 10px 0 0 0; font-weight: 500; color: #555;">إلى السجل الحالي المفتوح بالخلفية</p>
             </div>
 
-            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: سيتم نقل الأسماء وأرقام القيود فقط بشكل أبجدي نظيف دون تكرار للدرجات، ليتسنى رصد الدرجات الجديدة فوراً.</p>
+            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: عند التصدير، يشمل النقل التلاميذ المحددين بمربع التحديد فقط (أو الجميع إن لم يُحدَّد أحد). النقل بين شعب الصف نفسه ينقل الدرجات كاملة، أما النقل إلى صف مختلف فينقل رقم القيد فقط دون درجات. تُضاف البيانات إلى الصف الهدف دون استبدال ما هو موجود فيه، ويُحذف التلاميذ من الصف المصدر بعد نقلهم.</p>
 
             <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-migrate" onclick="executeStudentsMigration()">تنفيذ عملية النقل</button>
@@ -401,7 +401,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 </select>
             </div>
 
-            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: سيُنقل التلميذ بدرجاته إلى السجل الجديد، وستُضاف بياناته إلى من هم موجودون فيه دون حذفهم.</p>
+            <p style="font-size: 11px; color: #cc0000; font-weight: 600;">⚠️ تنبيه: إذا كان الترحيل بين شعب الصف نفسه تُنقل درجاته كاملة، وإذا كان إلى صف مختلف يُنقل رقم قيده فقط دون درجات. تُضاف بياناته إلى من هم موجودون في السجل الجديد دون حذفهم، ويُحذف من السجل الحالي بعد الترحيل.</p>
 
             <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-migrate" onclick="executeSingleStudentMigration()">ترحيل التلميذ</button>
@@ -827,42 +827,114 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 destLabel.innerHTML = "⬇️ إلى الصف والشعبة الحالية المفتوحة في الواجهة بالخلفية.";
             } else {
                 srcLabel.innerHTML = "إلى (الصف والشعبة الهدف المراد الترحيل إليها):";
-                destLabel.innerHTML = "⬆️ من الصف والشعبة الحالية المفتوحة في الواجهة بالخلفية.";
+                destLabel.innerHTML = "⬆️ من الصف والشعبة الحالية المفتوحة في الواجهة بالخلفية (التلاميذ المحددون فقط، أو الجميع إن لم يُحدَّد أحد).";
             }
         }
+
+        // كل تركيبات نوع/دور الامتحان المخزَّنة لكل تلميذ عبر السنة الدراسية بأكملها
+        const ALL_EXAM_COMBOS = [
+            { type: "الفصل الأول", role: "تشرين الأول" },
+            { type: "الفصل الأول", role: "تشرين الثاني" },
+            { type: "الفصل الأول", role: "كانون الأول" },
+            { type: "نصف السنة", role: "الأول" },
+            { type: "الفصل الثاني", role: "آذار" },
+            { type: "الفصل الثاني", role: "نيسان" },
+            { type: "نهاية السنة", role: "الأول" },
+            { type: "نهاية السنة", role: "الثاني" }
+        ];
+
+        // ينقل قائمة تلاميذ (studentsList: [{id, name}]) من صف/شعبة مصدر إلى صف/شعبة هدف:
+        // - بين شعب الصف نفسه: تُنقل الدرجات كاملة مع رقم القيد
+        // - إلى صف مختلف: يُنقل رقم القيد فقط دون أي درجات (تبدأ درجاته من جديد في الصف الجديد)
+        // - تُضاف بيانات التلاميذ إلى بيانات الهدف الموجودة مسبقاً دون استبدالها
+        // - يُحذف التلاميذ المنقولون بالكامل (الاسم والدرجات) من الصف والشعبة المصدر
+        function migrateStudentsBetweenGroups(studentsList, sourceClass, sourceDivision, targetClass, targetDivision) {
+            if(!studentsList || studentsList.length === 0) return;
+            const sameClass = (sourceClass === targetClass);
+            const migratingNameSet = new Set(studentsList.map(s => s.name));
+
+            const sourceNamesKey = `db_${sourceClass}_${sourceDivision}_names`;
+            const targetNamesKey = `db_${targetClass}_${targetDivision}_names`;
+            let sourceNames = JSON.parse(localStorage.getItem(sourceNamesKey) || "[]");
+            let targetNames = JSON.parse(localStorage.getItem(targetNamesKey) || "[]");
+
+            // إضافة (دمج) التلاميذ إلى قائمة الهدف دون حذف الموجودين فيها مسبقاً
+            studentsList.forEach(s => { targetNames.push({ id: s.id, name: s.name }); });
+            localStorage.setItem(targetNamesKey, JSON.stringify(targetNames));
+
+            // حذف التلاميذ المنقولين من قائمة المصدر
+            sourceNames = sourceNames.filter(n => !migratingNameSet.has((n.name || "").trim()));
+            localStorage.setItem(sourceNamesKey, JSON.stringify(sourceNames));
+
+            // نقل/حذف الدرجات عبر كل أنواع وأدوار الامتحانات المخزنة
+            ALL_EXAM_COMBOS.forEach(combo => {
+                const sourceGradesKey = `db_${sourceClass}_${sourceDivision}_${combo.type}_${combo.role}_grades`;
+                let sourceGrades = JSON.parse(localStorage.getItem(sourceGradesKey) || "[]");
+
+                if(sameClass) {
+                    const targetGradesKey = `db_${targetClass}_${targetDivision}_${combo.type}_${combo.role}_grades`;
+                    let targetGrades = JSON.parse(localStorage.getItem(targetGradesKey) || "[]");
+                    studentsList.forEach(s => {
+                        const gObj = sourceGrades.find(g => g.name === s.name);
+                        if(gObj) { targetGrades.push({ name: s.name, grades: gObj.grades }); }
+                    });
+                    localStorage.setItem(targetGradesKey, JSON.stringify(targetGrades));
+                }
+
+                // حذف درجات التلاميذ المنقولين من المصدر دائماً (سواء نُقلت درجاتهم أم لا)
+                sourceGrades = sourceGrades.filter(g => !migratingNameSet.has((g.name || "").trim()));
+                localStorage.setItem(sourceGradesKey, JSON.stringify(sourceGrades));
+            });
+        }
+
         function executeStudentsMigration() {
             const actionType = document.getElementById('migrationActionType').value;
-            const targetClass = document.getElementById('migTargetClass').value;
-            const targetDivision = document.getElementById('migTargetDivision').value;
-            
+            const otherClass = document.getElementById('migTargetClass').value;
+            const otherDivision = document.getElementById('migTargetDivision').value;
+
             const currentClass = document.getElementById('classSelect').value;
             const currentDivision = document.getElementById('divisionSelect').value;
 
-            if(targetClass === currentClass && targetDivision === currentDivision) {
+            if(otherClass === currentClass && otherDivision === currentDivision) {
                 alert("❌ لا يمكن النقل إلى نفس الصف والشعبة المفتوحة حالياً! الرجاء اختيار صف أو شعبة مختلفة.");
                 return;
             }
 
-            const currentKey = getNamesStorageKey();
-            const foreignKey = `db_${targetClass}_${targetDivision}_names`;
-
             if(actionType === "IMPORT") {
-                const data = JSON.parse(localStorage.getItem(foreignKey) || "[]");
-                if(data.length === 0) return alert("❌ لم يتم العثور على أي أسماء تلاميذ مخزنة في الصف المحدد للاستيراد منها!");
-                if(confirm(`هل أنتِ متأكدة من استيراد ونسخ (${data.length}) تلميذ من [${targetClass} - ${targetDivision}] إلى الصف الحالي؟\n(سيتم استبدال الأسماء الحالية بالأسماء المستوردة مع الحفاظ على نظافة السجل الحالية)`)) {
-                    localStorage.setItem(currentKey, JSON.stringify(data));
+                // الاستيراد: نقل جميع تلاميذ الصف/الشعبة الأخرى (المصدر) إلى السجل الحالي (الهدف)
+                const sourceNames = JSON.parse(localStorage.getItem(`db_${otherClass}_${otherDivision}_names`) || "[]");
+                const studentsList = sourceNames.filter(n => (n.name || "").trim() !== "").map(n => ({ id: n.id, name: n.name.trim() }));
+                if(studentsList.length === 0) return alert("❌ لم يتم العثور على أي أسماء تلاميذ مخزنة في الصف المحدد للاستيراد منها!");
+
+                const sameClass = (otherClass === currentClass);
+                const gradesNote = sameClass ? "مع كامل درجاتهم (لأن النقل بين شعب الصف نفسه)" : "بأرقام قيودهم فقط دون درجات (لأن النقل إلى صف مختلف)";
+                if(confirm(`هل أنتِ متأكدة من استيراد ونقل (${studentsList.length}) تلميذ من [${otherClass} - ${otherDivision}] إلى الصف الحالي، ${gradesNote}؟\n⚠️ سيُحذف هؤلاء التلاميذ من [${otherClass} - ${otherDivision}] بعد النقل، وستُضاف بياناتهم إلى السجل الحالي دون استبدال من هم موجودون فيه.`)) {
+                    saveAllStudentsData();
+                    migrateStudentsBetweenGroups(studentsList, otherClass, otherDivision, currentClass, currentDivision);
                     loadCurrentGroupData();
                     closeMigrationModal();
-                    alert("✅ تم استيراد أسماء التلاميذ بنجاح!");
+                    alert("✅ تم استيراد ونقل التلاميذ بنجاح!");
                 }
             } else {
-                const data = JSON.parse(localStorage.getItem(currentKey) || "[]");
-                if(data.length === 0 || (data.length === 1 && data[0].name === "")) return alert("❌ السجل الحالي فارغ، لا توجد أسماء تلاميذ لترحيلها!");
-                if(confirm(`هل أنتِ متأكدة من ترحيل ونسخ (${data.length}) تلميذ من الصف الحالي إلى [${targetClass} - ${targetDivision}]؟\n⚠️ تنبيه: هذا الإجراء سيستبدل قائمة الأسماء في الصف المستهدف بالأسماء الحالية.`)) {
-                    localStorage.setItem(foreignKey, JSON.stringify(data));
-                    closeMigrationModal();
-                    alert(`✅ تم ترحيل الأسماء بنجاح إلى [${targetClass} - ${targetDivision}]! يمكنك الانتقال إليها الآن لرصد درجاتهم.`);
-                }
+                // التصدير: نقل التلاميذ المحددين (أو الجميع إن لم يُحدَّد أحد) من السجل الحالي إلى صف/شعبة أخرى
+                saveAllStudentsData();
+                const rows = getTargetStudentRows();
+                const studentsList = Array.from(rows).map(row => {
+                    const nameIn = row.querySelector('.student-name-input');
+                    const idIn = row.querySelector('.student-id-input');
+                    return { id: idIn ? idIn.value.trim() : "", name: nameIn ? nameIn.value.trim() : "" };
+                }).filter(s => s.name !== "");
+
+                if(studentsList.length === 0) return alert("❌ لا توجد أسماء تلاميذ لترحيلها!");
+
+                const sameClass = (otherClass === currentClass);
+                const gradesNote = sameClass ? "مع كامل درجاتهم (لأن النقل بين شعب الصف نفسه)" : "بأرقام قيودهم فقط دون درجات (لأن النقل إلى صف مختلف)";
+                if(!confirm(`هل أنتِ متأكدة من ترحيل (${studentsList.length}) تلميذ من الصف الحالي إلى [${otherClass} - ${otherDivision}]، ${gradesNote}؟\n⚠️ سيُحذف هؤلاء التلاميذ من السجل الحالي بعد الترحيل، وستُضاف بياناتهم إلى [${otherClass} - ${otherDivision}] دون استبدال من هم موجودون فيها.`)) return;
+
+                migrateStudentsBetweenGroups(studentsList, currentClass, currentDivision, otherClass, otherDivision);
+                loadCurrentGroupData();
+                closeMigrationModal();
+                alert(`✅ تم ترحيل التلاميذ بنجاح إلى [${otherClass} - ${otherDivision}]!`);
             }
         }
 
@@ -915,35 +987,18 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 return;
             }
 
-            const gradesList = [];
-            studentRowToMigrate.querySelectorAll('.grade-input-field').forEach(input => {
-                gradesList.push(input.value.trim());
-            });
-
-            if (!confirm(`هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" من [${currentClass} - ${currentDivision}] إلى [${targetClass} - ${targetDivision}]؟`)) {
+            const sameClass = (targetClass === currentClass);
+            const gradesNote = sameClass ? "مع كامل درجاته (لأن النقل بين شعب الصف نفسه)" : "برقم قيده فقط دون درجاته (لأن النقل إلى صف مختلف)";
+            if (!confirm(`هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" من [${currentClass} - ${currentDivision}] إلى [${targetClass} - ${targetDivision}]، ${gradesNote}؟`)) {
                 return;
             }
 
-            // إضافة التلميذ إلى قوائم الصف والشعبة الجديدة دون حذف من هم موجودون هناك مسبقاً
-            const targetNamesKey = `db_${targetClass}_${targetDivision}_names`;
-            const examType = document.getElementById('examTypeSelect').value;
-            const examRole = document.getElementById('examRoleSelect').value;
-            const targetGradesKey = `db_${targetClass}_${targetDivision}_${examType}_${examRole}_grades`;
-
-            const targetNamesData = JSON.parse(localStorage.getItem(targetNamesKey) || "[]");
-            const targetGradesData = JSON.parse(localStorage.getItem(targetGradesKey) || "[]");
-
-            targetNamesData.push({ id: studentId, name: studentName });
-            targetGradesData.push({ name: studentName, grades: gradesList });
-
-            localStorage.setItem(targetNamesKey, JSON.stringify(targetNamesData));
-            localStorage.setItem(targetGradesKey, JSON.stringify(targetGradesData));
-
-            // حذف التلميذ من السجل الحالي بعد ترحيله بنجاح
-            studentRowToMigrate.remove();
             saveAllStudentsData();
-            calculateLiveStatistics();
-            combinedSearchAndFilter();
+            migrateStudentsBetweenGroups([{ id: studentId, name: studentName }], currentClass, currentDivision, targetClass, targetDivision);
+
+            // حذف صف التلميذ من الواجهة الحالية بعد ترحيله بنجاح
+            studentRowToMigrate.remove();
+            loadCurrentGroupData();
 
             alert(`✅ تم ترحيل التلميذ "${studentName}" بنجاح إلى [${targetClass} - ${targetDivision}].`);
             closeMigrateStudentModal();
