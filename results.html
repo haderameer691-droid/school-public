@@ -790,7 +790,6 @@
             let absCount = new Array(subjectsCount).fill(0);
             let passCount = new Array(subjectsCount).fill(0);
             let failCountArr = new Array(subjectsCount).fill(0);
-            let reappearCountArr = new Array(subjectsCount).fill(0);
 
             let totalSchoolRegistered = 0;
             let totalSchoolPassed = 0;
@@ -890,7 +889,7 @@
                     statusField.innerText = "مكمل";
                     statusField.classList.add('status-reappear');
                     totalSchoolReappear++;
-                    failedSubjectIndexes.forEach(idx => { reappearCountArr[idx]++; });
+                    failedSubjectIndexes.forEach(idx => { failCountArr[idx]++; });
                     reappearField.innerText = failedSubjects.join(" و ");
                 } else {
                     statusField.innerText = "راسب";
@@ -906,7 +905,7 @@
                 if (document.getElementById(`stat-disabled-${i}`)) document.getElementById(`stat-disabled-${i}`).innerText = toArabicDigits(absCount[i]);
                 if (document.getElementById(`stat-passed-${i}`)) document.getElementById(`stat-passed-${i}`).innerText = toArabicDigits(passCount[i]);
                 if (document.getElementById(`stat-failed-${i}`)) document.getElementById(`stat-failed-${i}`).innerText = toArabicDigits(failCountArr[i]);
-                if (document.getElementById(`stat-reappear-${i}`)) document.getElementById(`stat-reappear-${i}`).innerText = reappearCountArr[i] > 0 ? toArabicDigits(reappearCountArr[i]) : "-";
+                if (document.getElementById(`stat-reappear-${i}`)) document.getElementById(`stat-reappear-${i}`).innerText = "-";
                 let percent = (regCount[i] > 0) ? Math.round((passCount[i] / regCount[i]) * 100) : 0;
                 if (document.getElementById(`stat-percent-${i}`)) document.getElementById(`stat-percent-${i}`).innerText = toArabicDigits(percent) + " %";
             }
@@ -1592,10 +1591,10 @@
                             } else {
                                 classDivStats[classDivLabel].fail++;
                                 grandFail++;
-                                result.failedSubjectNames.forEach(subjName => {
-                                    classDivStats[classDivLabel].subjectFail[subjName] = (classDivStats[classDivLabel].subjectFail[subjName] || 0) + 1;
-                                });
                             }
+                            result.failedSubjectNames.forEach(subjName => {
+                                classDivStats[classDivLabel].subjectFail[subjName] = (classDivStats[classDivLabel].subjectFail[subjName] || 0) + 1;
+                            });
                         }
                     });
                 });
@@ -1657,24 +1656,27 @@
 
                 classDivLabels.forEach(label => {
                     const s = classDivStats[label];
+                    let rowTotal = 0;
                     stats2RowsHTML += `<tr><td class="rr-name-col">${label}</td>`;
                     subjectsUnion.forEach(subjName => {
                         if (s.subjectsList.includes(subjName)) {
                             const count = s.subjectFail[subjName] || 0;
                             subjectGrandTotals[subjName] += count;
+                            rowTotal += count;
                             stats2RowsHTML += `<td>${count > 0 ? toArabicDigits(count) : '-'}</td>`;
                         } else {
                             stats2RowsHTML += `<td>—</td>`;
                         }
                     });
-                    stats2RowsHTML += `<td style="font-weight:bold;">${toArabicDigits(s.fail)}</td></tr>`;
+                    stats2RowsHTML += `<td style="font-weight:bold;">${toArabicDigits(rowTotal)}</td></tr>`;
                 });
 
+                let grandSubjectInstances = Object.values(subjectGrandTotals).reduce((a, b) => a + b, 0);
                 stats2RowsHTML += `<tr style="background-color:#dbe9ff; font-weight:bold;"><td>المجموع الكلي</td>`;
                 subjectsUnion.forEach(subjName => {
                     stats2RowsHTML += `<td>${toArabicDigits(subjectGrandTotals[subjName])}</td>`;
                 });
-                stats2RowsHTML += `<td>${toArabicDigits(grandFail)}</td></tr>`;
+                stats2RowsHTML += `<td>${toArabicDigits(grandSubjectInstances)}</td></tr>`;
             }
 
             const pageHTML = `
