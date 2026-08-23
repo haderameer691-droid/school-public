@@ -529,8 +529,8 @@
     <!-- مودال ترحيل الصف والشعبة الجديد -->
     <div id="migrateModal" class="custom-modal">
         <div class="modal-content" style="width: 40%;">
-            <h3 style="margin-top: 0; color: #0056b3;">✈️ ترحيل كلي لبيانات السجل الحالي</h3>
-            <p style="font-size: 13px; color: #555;">حددي الصف والشعبة المستهدفة لنقل جميع تلاميذ ودرجات السجل الحالي إليها مباشرة:</p>
+            <h3 style="margin-top: 0; color: #0056b3;" id="migrateModalTitle">✈️ ترحيل كلي لبيانات السجل الحالي</h3>
+            <p style="font-size: 13px; color: #555;" id="migrateModalDesc">حددي الصف والشعبة المستهدفة لنقل جميع تلاميذ ودرجات السجل الحالي إليها مباشرة:</p>
             
             <div class="migrate-select-group">
                 <div class="migrate-select-item">
@@ -1126,6 +1126,18 @@
         function openMigrateModal() {
             document.getElementById('migrateClassSelect').value = document.getElementById('classSelect').value;
             document.getElementById('migrateDivisionSelect').value = document.getElementById('divisionSelect').value;
+
+            const selectedCount = document.querySelectorAll('.row-select-checkbox:checked').length;
+            const titleEl = document.getElementById('migrateModalTitle');
+            const descEl = document.getElementById('migrateModalDesc');
+            if (selectedCount > 0) {
+                titleEl.innerText = `✈️ ترحيل التلاميذ المحددين (${toArabicDigits(selectedCount)})`;
+                descEl.innerText = "حددي الصف والشعبة المستهدفة لنقل التلاميذ المحددين فقط إليها، مع الحفاظ على تلاميذ تلك الشعبة الموجودين مسبقاً:";
+            } else {
+                titleEl.innerText = "✈️ ترحيل كلي لبيانات السجل الحالي";
+                descEl.innerText = "لا يوجد تحديد حالياً، لذا سيتم نقل جميع تلاميذ السجل الحالي. حددي الصف والشعبة المستهدفة:";
+            }
+
             document.getElementById('migrateModal').style.display = 'block';
         }
 
@@ -1143,12 +1155,21 @@
                 return;
             }
 
-            const rows = document.querySelectorAll('.student-row');
+            const allRows = Array.from(document.querySelectorAll('.student-row'));
+            const selectedRows = allRows.filter(row => {
+                const cb = row.querySelector('.row-select-checkbox');
+                return cb && cb.checked;
+            });
+            const rowsToMigrate = selectedRows.length > 0 ? selectedRows : allRows;
+            const isPartial = selectedRows.length > 0;
+            const sameClass = (targetClass === sourceClass);
+
             const namesData = [];
             const gradesData = [];
             let validCount = 0;
+            let migratedRowsElements = [];
 
-            rows.forEach(row => {
+            rowsToMigrate.forEach(row => {
                 const nameInput = row.querySelector('.student-name-input');
                 if (!nameInput || nameInput.value.trim() === "") return;
 
@@ -1159,35 +1180,55 @@
                 
                 const grades = [];
                 row.querySelectorAll('.grade-input-field').forEach(input => { 
-                    grades.push(input.value.trim()); 
+                    grades.push(sameClass ? input.value.trim() : ""); 
                 });
 
                 namesData.push({ id, name });
                 gradesData.push({ id, grades });
+                migratedRowsElements.push(row);
             });
 
             if (validCount === 0) {
-                alert("⚠️ لا توجد بيانات تلاميذ أو أسماء صالحة في السجل الحالي لترحيلها.");
+                alert("⚠️ لا توجد بيانات تلاميذ أو أسماء صالحة لترحيلها. الرجاء تحديد تلاميذ (مربع التحديد في عمود الإجراءات) أو التأكد من وجود بيانات في السجل الحالي.");
                 closeMigrateModal();
                 return;
             }
 
-            if (confirm(`هل أنتِ متأكدة من ترحيل نسخ (${toArabicDigits(validCount)}) تلميذ من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`)) {
-                
-                // تخزين البيانات في المفاتيح المستهدفة الجديدة بالـ LocalStorage
-                localStorage.setItem(`studentsNamesOnlyData_${targetClass}__${targetDiv}`, JSON.stringify(namesData));
-                
-                const examType = document.getElementById('examTypeSelect').value;
-                const examRole = document.getElementById('examRoleSelect').value;
-                localStorage.setItem(`studentsGradesData_${targetClass}__${targetDiv}__${examType}__${examRole}`, JSON.stringify(gradesData));
+            const gradesNote = sameClass ? " (مع الدرجات لأنه نفس الصف)" : " (الاسم ورقم القيد فقط دون الدرجات لاختلاف الصف)";
+            const confirmMsg = isPartial
+                ? `هل أنتِ متأكدة من ترحيل (${toArabicDigits(validCount)}) تلميذ/ة محدد${gradesNote} من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`
+                : `هل أنتِ متأكدة من ترحيل جميع تلاميذ [${sourceClass} - شعبة ${sourceDiv}] (${toArabicDigits(validCount)})${gradesNote} إلى [${targetClass} - شعبة ${targetDiv}]؟`;
 
-                alert(`✅ تم ترحيل ونسخ البيانات بنجاح إلى الصف والشعبة المحددة.`);
+            if (confirm(confirmMsg)) {
+                
+                const targetNamesKey = getNamesStorageKey(targetClass, targetDiv);
+                const targetGradesKey = getGradesStorageKey(targetClass, targetDiv);
+
+                let existingNames = [];
+                let existingGrades = [];
+                try { existingNames = JSON.parse(localStorage.getItem(targetNamesKey)) || []; } catch (e) { existingNames = []; }
+                try { existingGrades = JSON.parse(localStorage.getItem(targetGradesKey)) || []; } catch (e) { existingGrades = []; }
+
+                const mergedNames = existingNames.concat(namesData);
+                const mergedGrades = existingGrades.concat(gradesData);
+
+                // دمج البيانات المرحّلة مع التلاميذ الموجودين مسبقاً في الصف/الشعبة المستهدفة (وليست استبدالاً)
+                localStorage.setItem(targetNamesKey, JSON.stringify(mergedNames));
+                localStorage.setItem(targetGradesKey, JSON.stringify(mergedGrades));
+
+                // حذف التلاميذ المرحّلين من السجل الحالي (نقل فعلي)
+                migratedRowsElements.forEach(row => row.remove());
+
+                document.querySelectorAll('.row-select-checkbox').forEach(cb => cb.checked = false);
+                const selectAllBox = document.getElementById('selectAllRowsCheckbox');
+                if (selectAllBox) selectAllBox.checked = false;
+
+                calculateResults();
+                saveAllStudentsData();
+
+                const successNote = sameClass ? "مع درجاتهم" : "بالاسم ورقم القيد فقط دون الدرجات لاختلاف الصف";
+                alert(`✅ تم ترحيل (${toArabicDigits(validCount)}) تلميذ/ة بنجاح إلى [${targetClass} - شعبة ${targetDiv}] ${successNote}، مع الحفاظ على التلاميذ الموجودين مسبقاً في تلك الشعبة.`);
                 closeMigrateModal();
-
-                // تحويل واجهة المستخدم تلقائياً لرؤية الصف والشعبة الجديدة التي تم الترحيل إليها
-                document.getElementById('classSelect').value = targetClass;
-                document.getElementById('divisionSelect').value = targetDiv;
-                onClassOrDivisionChange();
             }
         }
 
@@ -1244,8 +1285,14 @@
             studentRowToMigrate.querySelectorAll('.grade-input-field').forEach(input => {
                 grades.push(input.value.trim());
             });
+            const sameClass = (targetClass === sourceClass);
+            const gradesToMigrate = sameClass ? grades : new Array(grades.length).fill("");
 
-            if (!confirm(`هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`)) {
+            const confirmMsg = sameClass
+                ? `هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" (مع درجاته) من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`
+                : `هل أنتِ متأكدة من ترحيل التلميذ "${studentName}" (الاسم ورقم القيد فقط، دون الدرجات لاختلاف الصف) من [${sourceClass} - شعبة ${sourceDiv}] إلى [${targetClass} - شعبة ${targetDiv}]؟`;
+
+            if (!confirm(confirmMsg)) {
                 return;
             }
 
@@ -1262,7 +1309,7 @@
             const targetGradesData = existingTargetGrades ? JSON.parse(existingTargetGrades) : [];
 
             targetNamesData.push({ id: studentId, name: studentName });
-            targetGradesData.push({ id: studentId, grades: grades });
+            targetGradesData.push({ id: studentId, grades: gradesToMigrate });
 
             localStorage.setItem(targetNamesKey, JSON.stringify(targetNamesData));
             localStorage.setItem(targetGradesKey, JSON.stringify(targetGradesData));
@@ -1273,7 +1320,10 @@
             calculateResults();
             saveAllStudentsData();
 
-            alert(`✅ تم ترحيل التلميذ "${studentName}" بنجاح إلى [${targetClass} - شعبة ${targetDiv}].`);
+            const successMsg = sameClass
+                ? `✅ تم ترحيل التلميذ "${studentName}" مع درجاته بنجاح إلى [${targetClass} - شعبة ${targetDiv}].`
+                : `✅ تم ترحيل التلميذ "${studentName}" (الاسم ورقم القيد فقط) بنجاح إلى [${targetClass} - شعبة ${targetDiv}].`;
+            alert(successMsg);
             closeMigrateStudentModal();
         }
 
