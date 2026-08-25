@@ -5,7 +5,7 @@
 <title>أداة درجات القرار (٥-١٥)</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
     body { font-family: 'Cairo', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #000; }
     .wrap { max-width: 1150px; margin: 0 auto; }
     .panel { background: #fff; border: 2px solid #000; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
@@ -53,7 +53,7 @@
 
     /* ===== تنسيق الكروت السنوية (نسخة مطابقة للملف الأصلي) ===== */
     .cards-container { display: none; }
-    .advanced-report-card { font-family: 'Cairo', sans-serif; font-weight: 600; background: #fff; border: 3px solid #000; padding: 15px 25px; margin: 0 auto 25px auto; width: 960px; min-height: 18.2cm; box-sizing: border-box; display: flex; flex-direction: column; color: #000; }
+    .advanced-report-card { font-family: 'Cairo', sans-serif; font-weight: 600; background: #fff; border: 3px solid #000; padding: 15px 25px; margin: 0 auto 25px auto; width: 1030px; min-height: 18.2cm; box-sizing: border-box; display: flex; flex-direction: column; color: #000; }
     .adv-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
     .adv-header-right { text-align: right; font-size: 13px; line-height: 1.5; font-weight: 500; flex: 1; }
     .adv-header-left { text-align: right !important; font-size: 13px; line-height: 1.5; font-weight: 500; flex: 1; display: flex; flex-direction: column; align-items: flex-start; padding-right: 40px; }
@@ -61,20 +61,21 @@
     .adv-header-center-box { border: 2px solid #000; padding: 6px 20px; text-align: center; min-width: 320px; border-radius: 4px; background-color: #0b3b6c; }
     .adv-header-center-box h2 { margin: 0; font-size: 18px; color: #ffffff; font-weight: 800; }
     .adv-header-center-box p { margin: 3px 0 0 0; font-size: 12px; color: #ffffff; font-weight: 500; }
-    .adv-card-table { table-layout: fixed; width: 910px; border-collapse: collapse; margin-bottom: 8px; border: 3px solid #000; }
-    .adv-card-table th { background-color: #63e3e4; color: #000; font-size: 12px; border: 2px solid #000; padding: 5px 2px; vertical-align: middle; text-align: center; font-weight: 700; }
-    .adv-card-table td { border: 2px solid #000; padding: 4px 2px; font-size: 14px; text-align: center; height: 35px; font-weight: 700; color: #000; }
-    .adv-subject-cell { width: 140px !important; text-align: right !important; padding-right: 12px !important; font-weight: 700; background-color: #ede412; }
-    .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 59px !important; }
+    .adv-card-table { table-layout: fixed; width: 980px; border-collapse: collapse; margin-bottom: 8px; border: 3px solid #000; }
+    .adv-card-table th { background-color: #63e3e4; color: #000; font-size: 10.5px; border: 2px solid #000; padding: 5px 2px; vertical-align: middle; text-align: center; font-weight: 700; line-height: 1.25; }
+    .adv-card-table td { border: 2px solid #000; padding: 4px 2px; font-size: 13px; text-align: center; height: 35px; font-weight: 700; color: #000; }
+    .adv-subject-cell { width: 128px !important; text-align: right !important; padding-right: 12px !important; font-weight: 700; background-color: #ede412; }
+    .adv-card-table th:not(.adv-subject-cell), .adv-card-table td:not(.adv-subject-cell) { width: 56.7px !important; }
+    .card-decision-boost-col { background: #eafaf0 !important; }
     .card-grade-fail { color: #990000 !important; font-weight: 700 !important; text-decoration: underline !important; text-decoration-color: #990000 !important; text-decoration-style: solid !important; text-decoration-thickness: 1px !important; }
     .card-decision-boost { color: #0d5f0d !important; font-weight: 800 !important; }
     .card-text-fail { color: #990000 !important; font-weight: 700 !important; }
     .card-fail-subjects-mini { font-size: 12px !important; font-weight: 700 !important; color: #990000; display: block; margin-top: 3px; line-height: 1.3; font-family: 'Cairo', sans-serif; }
     .card-decision-note { font-size: 11.5px !important; font-weight: 700 !important; color: #0d5f0d; display: block; margin-top: 3px; line-height: 1.3; font-family: 'Cairo', sans-serif; }
-    .adv-card-summary { display: flex; justify-content: space-between; align-items: center; border: 3px solid #000; padding: 8px 25px; font-size: 14px; font-weight: 500; background-color: #f8fafc; margin-bottom: 4px; margin-top: auto; flex-wrap: wrap; gap: 5px; border-radius: 4px; width: 910px; box-sizing: border-box; }
+    .adv-card-summary { display: flex; justify-content: space-between; align-items: center; border: 3px solid #000; padding: 8px 25px; font-size: 14px; font-weight: 500; background-color: #f8fafc; margin-bottom: 4px; margin-top: auto; flex-wrap: wrap; gap: 5px; border-radius: 4px; width: 980px; box-sizing: border-box; }
     .adv-card-summary div { font-weight: 500; }
     .adv-card-summary span { font-weight: 700; }
-    .adv-card-footer { display: flex; justify-content: space-between; width: 910px; font-size: 13.5px; font-weight: 700; padding-top: 5px; border-top: 2px dashed #000; margin-top: 5px; box-sizing: border-box; }
+    .adv-card-footer { display: flex; justify-content: space-between; width: 980px; font-size: 13.5px; font-weight: 700; padding-top: 5px; border-top: 2px dashed #000; margin-top: 5px; box-sizing: border-box; }
     .card-sum-avg-box { flex-basis: 100%; width: 100%; box-sizing: border-box; text-align: center; font-size: 12.5px; font-weight: 700; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #000; word-break: break-word; color: #0d2c54; }
 
     @media print {
@@ -91,7 +92,7 @@
         table.reg-table tbody { counter-reset: printSeq; }
         table.reg-table .seq-num { display: none; }
         table.reg-table tr:not(.zero-added) td.seq-cell::before { counter-increment: printSeq; content: counter(printSeq, arabic-indic); }
-        .advanced-report-card { page-break-inside: avoid; page-break-after: always; width: 960px !important; min-height: 18.0cm !important; margin: 0 auto !important; }
+        .advanced-report-card { page-break-inside: avoid; page-break-after: always; width: 1030px !important; min-height: 18.0cm !important; margin: 0 auto !important; }
         .advanced-report-card:first-of-type { page-break-before: avoid !important; }
     }
     body.cards-view-active .panel.no-print { display: none !important; }
@@ -373,6 +374,9 @@
     const classesList = ["الخامس الابتدائي", "السادس الابتدائي"];
     const divisionsList = ["بدون شعبة", "أ", "ب", "ج", "د"];
 
+    // لوحة ألوان فاتحة تُميّز كل تلميذ عن غيره في جدول القرارات (تدور دوريًا مع عدد التلاميذ)
+    const studentColorPalette = ["#eaf4ff", "#fff2e0", "#eafaf1", "#fdeaf3", "#f3f0ff", "#fffbe0", "#e0faff", "#fbe9e7", "#e8f5e9", "#f1f8e9", "#ede7f6", "#fce4ec"];
+
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -529,9 +533,14 @@
 
         let rowsHtml = '';
         let counter = 1;
+        let studentIndex = 0;
         let decisionMap = {}; // يُبنى هنا لاستخدامه لاحقًا في الكروت
+        // ألوان فاتحة تتكرر دوريًا لتمييز صفوف كل تلميذ عن التلميذ الذي يليه
+        const studentColors = ["#dbeafe", "#fef9c3", "#dcfce7", "#fce7f3", "#ede9fe", "#ffedd5", "#ccfbf1", "#e0e7ff", "#ffe4e6", "#ecfccb"];
 
         studentsList.forEach(s => {
+            const rowColor = studentColors[studentIndex % studentColors.length];
+            studentIndex++;
             let poolLeft = decisionValue;
             let rowsData = []; // بيانات كل صف مادة قبل بناء الـ HTML (لضبط النتيجة أولًا)
 
@@ -581,7 +590,7 @@
             // بناء صفوف الجدول: النتيجة تتكرر في كل صف (بدل rowspan) حتى تبقى كل مادة مستقلة عند إخفاء الصفوف بلا إضافة عند الطباعة
             rowsData.forEach(rd => {
                 rowsHtml += `
-                    <tr class="${rd.addedAmount > 0 ? '' : 'zero-added'}">
+                    <tr class="${rd.addedAmount > 0 ? '' : 'zero-added'}" style="background-color:${rowColor};">
                         <td class="seq-cell"><span class="seq-num">${toArabicDigits(counter)}</span></td>
                         <td class="name-cell">${s.name}</td>
                         <td class="classdiv-cell">${s.div === "بدون شعبة" ? s.cl : `${s.cl} / ${s.div}`}</td>
@@ -659,7 +668,7 @@
             styleEl.id = 'dynamicPageOrientation';
             document.head.appendChild(styleEl);
         }
-        styleEl.textContent = `@page { size: A4 ${mode}; margin: ${mode === 'landscape' ? '1cm' : '1.2cm'}; }`;
+        styleEl.textContent = `@page { size: A4 ${mode}; margin: ${mode === 'landscape' ? '0.6cm' : '1.2cm'}; }`;
     }
 
     function buildCardsHtml() {
@@ -709,17 +718,17 @@
 
                 const isSubAbsent1 = (finR1 === "غ" || comp.mid === "غ");
                 const hasFinalGrade1 = (finR1 !== null);
-                let finalG1 = isSubAbsent1 ? 0 : customRoundValue((comp.effort + finR1Num) / 2);
+                const finalG1 = isSubAbsent1 ? 0 : customRoundValue((comp.effort + finR1Num) / 2); // الدرجة الأصلية قبل القرار
                 const addedR1 = decisionMap[`${s.cl}|${s.div}|${s.name}|الأول|${idx}`] || 0;
                 const boostedR1 = addedR1 > 0;
-                if(boostedR1) finalG1 = finalG1 + addedR1;
+                const finalG1After = finalG1 + addedR1; // الدرجة النهائية بعد القرار
 
                 const isSubAbsent2 = (finR2 === "غ" || comp.mid === "غ");
                 const hasFinalGrade2 = (finR2 !== null);
-                let finalG2 = isSubAbsent2 ? 0 : customRoundValue((comp.effort + finR2Num) / 2);
+                const finalG2 = isSubAbsent2 ? 0 : customRoundValue((comp.effort + finR2Num) / 2); // الدرجة الأصلية قبل القرار
                 const addedR2 = decisionMap[`${s.cl}|${s.div}|${s.name}|الثاني|${idx}`] || 0;
                 const boostedR2 = addedR2 > 0;
-                if(boostedR2) finalG2 = finalG2 + addedR2;
+                const finalG2After = finalG2 + addedR2; // الدرجة الأخيرة بعد القرار
 
                 if(boostedR1 || boostedR2) boostedSubjects.push(sub);
 
@@ -740,9 +749,11 @@
                         <td style="background:#f8fafc;">${period2AllEmpty ? "-" : toArabicDigits(comp.avg2)}</td>
                         <td style="background:#f1f5f9;">${effortAllEmpty ? "-" : toArabicDigits(comp.effort)}</td>
                         <td>${finR1 === "غ" ? "غ" : (finR1 === null ? "-" : toArabicDigits(finR1Num))}</td>
-                        <td class="${boostedR1 ? 'card-decision-boost' : (!isSubAbsent1 && hasFinalGrade1 && finalG1 < 50 ? 'card-grade-fail' : '')}" style="background:#eff6ff;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1) : "-")}</td>
+                        <td class="${!isSubAbsent1 && hasFinalGrade1 && finalG1 < 50 ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1) : "-")}</td>
+                        <td class="${boostedR1 ? 'card-decision-boost' : (!isSubAbsent1 && hasFinalGrade1 && finalG1After < 50 ? 'card-grade-fail' : '')}" style="background:#eafaf0;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1After) : "-")}</td>
                         <td>${finR2 === "غ" ? "غ" : (finR2 === null ? "-" : toArabicDigits(finR2Num))}</td>
-                        <td class="${boostedR2 ? 'card-decision-boost' : (!isSubAbsent2 && hasFinalGrade2 && finalG2 < 50 ? 'card-grade-fail' : '')}" style="background:#eff6ff;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2) : "-")}</td>
+                        <td class="${!isSubAbsent2 && hasFinalGrade2 && finalG2 < 50 ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2) : "-")}</td>
+                        <td class="${boostedR2 ? 'card-decision-boost' : (!isSubAbsent2 && hasFinalGrade2 && finalG2After < 50 ? 'card-grade-fail' : '')}" style="background:#eafaf0;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2After) : "-")}</td>
                     </tr>
                 `;
             });
@@ -784,8 +795,10 @@
                                 <th rowspan="2">السعي السنوي</th>
                                 <th rowspan="2">نهاية السنة</th>
                                 <th rowspan="2">الدرجة النهائية</th>
+                                <th rowspan="2">الدرجة النهائية بعد القرار</th>
                                 <th rowspan="2">الدور الثاني</th>
                                 <th rowspan="2">الدرجة الأخيرة</th>
+                                <th rowspan="2">الدرجة الأخيرة بعد القرار</th>
                             </tr>
                             <tr>
                                 <th>ت١</th><th>ت٢</th><th>ك١</th><th>آذار</th><th>نيسان</th>
@@ -798,7 +811,7 @@
                             <div>النتيجة: <span class="${(cardStatusTxt === 'مكمل' || cardStatusTxt === 'راسب') ? 'card-text-fail' : ''}" style="font-size:16px;">${cardStatusTxt}</span></div>
                             ${decisionNoteHtml}
                         </div>
-                        <div class="card-sum-avg-box">المجموع: ${toArabicDigits(lastGradeSum)} (${numberToArabicWords(lastGradeSum)} درجة) — المعدل: ${toArabicDigits(customRoundValue(lastGradeSum / currentSubjects.length))}</div>
+                        <div class="card-sum-avg-box">المجموع: ${toArabicDigits(lastGradeSum)} (${numberToArabicWords(lastGradeSum)} درجة) — المعدل: ${forceArabicDigitsText((lastGradeSum / currentSubjects.length).toFixed(2))}</div>
                     </div>
                     <div class="adv-card-footer">
                         <div>مرشد الصف / ${managerTitle}</div>
