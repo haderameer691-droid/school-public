@@ -8,7 +8,7 @@
     <!-- تحميل مسبق للخطوط لضمان عملها الفوري دون تأخير في المتصفح -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,700&family=Cairo:wght@600;700;800;900&family=Changa:wght@600;700;800&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,700&family=Cairo:wght@600;700;800;900&family=Changa:wght@600;700;800&family=Tajawal:wght@500;700;900&family=Almarai:wght@700;800&family=Mada:wght@600;700;900&family=El+Messiri:wght@600;700;800&display=swap" rel="stylesheet">
 
     <style>
         /* تعريف قواعد الخطوط لتسهيل استدعائها */
@@ -16,6 +16,16 @@
         .font-tajawal { font-family: 'Tajawal', sans-serif !important; }
         .font-amiri { font-family: 'Amiri', serif !important; }
         .font-changa { font-family: 'Changa', sans-serif !important; }
+        /* خطوط مضغوطة إضافية: أحرف أضيق ومسافات أسطر أقل - توفّر مساحة رأسية عند الطباعة (مفيدة جداً بالوضع الأفقي) */
+        .font-almarai { font-family: 'Almarai', sans-serif !important; }
+        .font-mada    { font-family: 'Mada', sans-serif !important; }
+        .font-elmessiri { font-family: 'El Messiri', sans-serif !important; }
+        /* تقليص تباعد الأسطر والفقرات مع هذه الخطوط تحديداً لتوفير أكبر مساحة رأسية ممكنة (مثالي عند نقص المساحة في الوضع الأفقي) */
+        .font-almarai p, .font-mada p, .font-elmessiri p,
+        .font-almarai td, .font-mada td, .font-elmessiri td,
+        .font-almarai th, .font-mada th, .font-elmessiri th {
+            line-height: 1.15 !important;
+        }
 
         /* تنسيقات عامة للخطوط والصفحة - تطبيق اللون الأسود الغامق */
         body {
@@ -31,7 +41,7 @@
         /* حاوية الصفحة الرئيسية - تحاكي ورقة A4 حقيقية */
         .page-container {
             width: 210mm; 
-            min-height: 297mm; /* مقاس A4 القياسي */
+            min-height: 297mm; /* مقاس A4 القياسي (عمودي افتراضياً) */
             margin: 0 auto;
             background: #fff;
             padding: 45px; /* مسافة داخلية تمنع تداخل النصوص مع الإطار */
@@ -39,6 +49,16 @@
             position: relative; /* أساسي لتثبيت الإطار داخله */
             box-sizing: border-box;
             z-index: 2;
+        }
+
+        /* اتجاه الصفحة: عمودي (افتراضي) وأفقي - يُطبَّق على الشاشة والطباعة معاً لضمان تطابق المعاينة مع المطبوع */
+        .page-container.orientation-portrait {
+            width: 210mm;
+            min-height: 297mm;
+        }
+        .page-container.orientation-landscape {
+            width: 297mm;
+            min-height: 210mm;
         }
 
         /* الإطار الخارجي للصفحة - الموضع والأبعاد ثابتة دائماً، ونمط الحد يتغير عبر الأصناف أدناه فقط */
@@ -417,8 +437,7 @@
         /* ======================================================== */
         @media print {
             @page {
-                size: A4 portrait;
-                margin: 0; /* تصفير الهامش التلقائي للتحكم بالإطار بدقة */
+                margin: 0; /* تصفير الهامش التلقائي للتحكم بالإطار بدقة - لا يوجد فرض لمقاس محدد، لترك حرية الاتجاه لنافذة الطباعة نفسها */
             }
             body {
                 background-color: #fff !important;
@@ -443,19 +462,35 @@
             }
 
             .page-container {
-                width: 210mm !important;
-                height: 297mm !important;
-                min-height: 297mm !important;
-                max-height: 297mm !important;
                 margin: 0 !important;
                 padding: 40px !important; /* تقليص الحشو الداخلي ليحاذي الإطار الجديد بانسجام تام */
                 box-shadow: none !important;
                 position: relative !important;
-                page-break-inside: avoid;
                 box-sizing: border-box !important;
                 background: transparent !important;
+                /* لا يوجد ارتفاع أو حد أقصى مفروض هنا عمداً: الحاوية تكبر بحسب محتواها الفعلي
+                   (رأس + جدول + ملاحظات) حتى لا يُقصّ أي جزء من المحتوى ولا يتراكب مع الإطار */
+            }
+            /* عرض الحاوية فقط حسب الاتجاه المختار (بدون أي فرض لمقاس @page أو تدوير) -
+               اتجاه الورقة الفعلي (عمودي/أفقي) يجب اختياره يدوياً من داخل نافذة الطباعة نفسها،
+               لأن بعض المتصفحات (خصوصاً أندرويد) لا تلتزم بتبديل اتجاه CSS تلقائياً */
+            .page-container.orientation-portrait {
+                width: 210mm !important;
+                min-height: 297mm !important;
+            }
+            .page-container.orientation-landscape {
+                width: 297mm !important;
+                min-height: 210mm !important;
+            }
+            /* منع قص أي عنصر في منتصفه عند الانتقال بين الصفحات (خصوصاً مهم بالوضع الأفقي حيث المساحة الرأسية أقل) */
+            tr, .notes-area, .signature-container, .header-section {
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
             .control-panel {
+                display: none !important;
+            }
+            #landscapeHint {
                 display: none !important;
             }
             .calendar-btn, .date-picker-hidden {
@@ -560,6 +595,9 @@
                 <option value="Tajawal">خط تجول (ناعم وبسيط)</option>
                 <option value="Amiri">خط أميري (كلاسيكي عريق)</option>
                 <option value="Changa">خط الجيزة (عريض وجريء)</option>
+                <option value="Almarai">🗜️ خط الماراي (مضغوط - يوفّر مساحة)</option>
+                <option value="Mada">🗜️ خط مدى (مضغوط جداً - أقصى توفير)</option>
+                <option value="Elmessiri">🗜️ خط المسيري (مضغوط وأنيق)</option>
             </select>
         </div>
 
@@ -589,7 +627,22 @@
                 <option value="none">❌ بدون إطار للصفحة</option>
             </select>
         </div>
+
+        <!-- 6. اختيار اتجاه ورقة الطباعة -->
+        <div class="selector-box">
+            <label for="printOrientationSelect">🖨️ اتجاه الطباعة:</label>
+            <select id="printOrientationSelect" class="theme-select" onchange="applyPrintOrientation(this.value)">
+                <option value="portrait">📄 عمودي (Portrait)</option>
+                <option value="landscape">📃 أفقي (Landscape)</option>
+            </select>
+        </div>
     </div>
+
+    <!-- ملاحظة تظهر فقط عند اختيار الوضع الأفقي؛ تختفي تلقائياً عند الطباعة -->
+    <p id="landscapeHint" style="display:none; text-align:center; color:#b91c1c; font-weight:800; font-size:13px; margin:-10px 0 15px;">
+        ⚠️ بعض الأجهزة (خصوصاً أندرويد) لا تُغيّر اتجاه الورقة تلقائياً. عند فتح نافذة الطباعة/حفظ PDF،
+        تأكدي من اختيار "أفقي / Landscape" يدوياً من إعدادات الاتجاه هناك (عادة بجانب حجم الورقة أو ضمن "المزيد من الإعدادات").
+    </p>
 
     <p>📋 حددي الصفوف الدراسية النشطة لجدول الامتحان:</p>
     <div class="checkbox-group">
@@ -607,7 +660,7 @@
     <span class="save-status" id="saveStatus">✓ تم حفظ التغييرات تلقائياً</span>
 </div>
 
-<div class="page-container" id="printablePage">
+<div class="page-container orientation-portrait" id="printablePage">
     <!-- البرواز الثابت والآمن بداخل الورقة -->
     <div class="print-border-frame frame-double" id="printBorderFrame"></div>
 
@@ -699,6 +752,7 @@
     let currentBorderStyle = "solid";
     let currentFont = "Cairo"; // الخط الافتراضي
     let currentPageBorderStyle = "double"; // نمط حد الصفحة الافتراضي
+    let currentPrintOrientation = "portrait"; // اتجاه ورقة الطباعة الافتراضي
 
     // دالة ترجمة أسماء الصفوف
     function getGradeDisplayName(grade) {
@@ -815,10 +869,11 @@
     // تطبيق نوع الخط على الجسم الرئيسي والمدخلات والجدول بالكامل بقوة (Force Override)
     function applyFontFamily(fontName) {
         currentFont = fontName;
+        const allFontClasses = ['font-cairo', 'font-tajawal', 'font-amiri', 'font-changa', 'font-almarai', 'font-mada', 'font-elmessiri'];
         
         // إزالة الكلاسات السابقة للخطوط
         const targetContainer = document.getElementById('printablePage');
-        targetContainer.classList.remove('font-cairo', 'font-tajawal', 'font-amiri', 'font-changa');
+        targetContainer.classList.remove(...allFontClasses);
         
         // تطبيق كلاس الخط الجديد مباشرة على حاوية الصفحة بالكامل
         const className = 'font-' + fontName.toLowerCase();
@@ -827,7 +882,7 @@
         // تطبيق نفس الفئة على كافة عناصر الكتابة والمدخلات بشكل صارم بداخل الحاوية
         const elementsToForce = targetContainer.querySelectorAll('input, textarea, select, td, th, p, span, div');
         elementsToForce.forEach(el => {
-            el.classList.remove('font-cairo', 'font-tajawal', 'font-amiri', 'font-changa');
+            el.classList.remove(...allFontClasses);
             el.classList.add(className);
         });
 
@@ -898,6 +953,23 @@
         if (frame) {
             frame.classList.remove('frame-double', 'frame-solid', 'frame-thick', 'frame-dashed', 'frame-dotted', 'frame-groove', 'frame-ridge', 'frame-none');
             frame.classList.add('frame-' + styleName);
+        }
+        saveData();
+    }
+
+    // تطبيق اتجاه ورقة الطباعة (عمودي/أفقي): يبدّل صنف حاوية الصفحة على الشاشة والطباعة معاً،
+    // ويُظهر ملاحظة تذكيرية عند اختيار الوضع الأفقي لأن بعض الأجهزة تتطلب اختيار الاتجاه يدوياً من نافذة الطباعة
+    function applyPrintOrientation(orientation) {
+        currentPrintOrientation = orientation;
+        const container = document.getElementById('printablePage');
+        const hint = document.getElementById('landscapeHint');
+
+        if (container) {
+            container.classList.remove('orientation-portrait', 'orientation-landscape');
+            container.classList.add('orientation-' + orientation);
+        }
+        if (hint) {
+            hint.style.display = (orientation === 'landscape') ? 'block' : 'none';
         }
         saveData();
     }
@@ -1109,6 +1181,7 @@
             currentBorderStyle: currentBorderStyle,
             currentFont: currentFont, // حفظ الخط النشط
             currentPageBorderStyle: currentPageBorderStyle, // حفظ نمط حد الصفحة
+            currentPrintOrientation: currentPrintOrientation, // حفظ اتجاه ورقة الطباعة
             tableRows: []
         };
 
@@ -1160,6 +1233,10 @@
             currentPageBorderStyle = data.currentPageBorderStyle || 'double';
             document.getElementById('pageBorderSelect').value = currentPageBorderStyle;
             applyPageBorderStyle(currentPageBorderStyle);
+
+            currentPrintOrientation = data.currentPrintOrientation || 'portrait';
+            document.getElementById('printOrientationSelect').value = currentPrintOrientation;
+            applyPrintOrientation(currentPrintOrientation);
 
             activeGrades = data.activeGrades || ['grade1', 'grade2', 'grade3', 'grade4', 'grade5', 'grade6'];
             document.querySelectorAll('.grade-selector').forEach(checkbox => {
