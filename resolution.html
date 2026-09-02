@@ -739,19 +739,19 @@
                 tableRowsHtml += `
                     <tr>
                         <td class="adv-subject-cell">${sub}</td>
-                        <td>${rawT1 === "غ" ? "غ" : (rawT1 === null ? "-" : toArabicDigits(parseFloat(rawT1)||0))}</td>
-                        <td>${rawT2 === "غ" ? "غ" : (rawT2 === null ? "-" : toArabicDigits(parseFloat(rawT2)||0))}</td>
-                        <td>${rawT3 === "غ" ? "غ" : (rawT3 === null ? "-" : toArabicDigits(parseFloat(rawT3)||0))}</td>
-                        <td style="background:#f8fafc;">${period1AllEmpty ? "-" : toArabicDigits(comp.avg1)}</td>
-                        <td>${comp.mid === "غ" ? "غ" : (comp.mid === null ? "-" : toArabicDigits(comp.midNum))}</td>
-                        <td>${rawM2 === "غ" ? "غ" : (rawM2 === null ? "-" : toArabicDigits(parseFloat(rawM2)||0))}</td>
-                        <td>${rawM3 === "غ" ? "غ" : (rawM3 === null ? "-" : toArabicDigits(parseFloat(rawM3)||0))}</td>
-                        <td style="background:#f8fafc;">${period2AllEmpty ? "-" : toArabicDigits(comp.avg2)}</td>
-                        <td style="background:#f1f5f9;">${effortAllEmpty ? "-" : toArabicDigits(comp.effort)}</td>
-                        <td>${finR1 === "غ" ? "غ" : (finR1 === null ? "-" : toArabicDigits(finR1Num))}</td>
+                        <td class="${rawT1 !== null && rawT1 !== "غ" && (parseFloat(rawT1)||0) < 50 ? 'card-grade-fail' : ''}">${rawT1 === "غ" ? "غ" : (rawT1 === null ? "-" : toArabicDigits(parseFloat(rawT1)||0))}</td>
+                        <td class="${rawT2 !== null && rawT2 !== "غ" && (parseFloat(rawT2)||0) < 50 ? 'card-grade-fail' : ''}">${rawT2 === "غ" ? "غ" : (rawT2 === null ? "-" : toArabicDigits(parseFloat(rawT2)||0))}</td>
+                        <td class="${rawT3 !== null && rawT3 !== "غ" && (parseFloat(rawT3)||0) < 50 ? 'card-grade-fail' : ''}">${rawT3 === "غ" ? "غ" : (rawT3 === null ? "-" : toArabicDigits(parseFloat(rawT3)||0))}</td>
+                        <td class="${!period1AllEmpty && comp.avg1 < 50 ? 'card-grade-fail' : ''}" style="background:#f8fafc;">${period1AllEmpty ? "-" : toArabicDigits(comp.avg1)}</td>
+                        <td class="${comp.mid !== null && comp.mid !== "غ" && comp.midNum < 50 ? 'card-grade-fail' : ''}">${comp.mid === "غ" ? "غ" : (comp.mid === null ? "-" : toArabicDigits(comp.midNum))}</td>
+                        <td class="${rawM2 !== null && rawM2 !== "غ" && (parseFloat(rawM2)||0) < 50 ? 'card-grade-fail' : ''}">${rawM2 === "غ" ? "غ" : (rawM2 === null ? "-" : toArabicDigits(parseFloat(rawM2)||0))}</td>
+                        <td class="${rawM3 !== null && rawM3 !== "غ" && (parseFloat(rawM3)||0) < 50 ? 'card-grade-fail' : ''}">${rawM3 === "غ" ? "غ" : (rawM3 === null ? "-" : toArabicDigits(parseFloat(rawM3)||0))}</td>
+                        <td class="${!period2AllEmpty && comp.avg2 < 50 ? 'card-grade-fail' : ''}" style="background:#f8fafc;">${period2AllEmpty ? "-" : toArabicDigits(comp.avg2)}</td>
+                        <td class="${!effortAllEmpty && comp.effort < 50 ? 'card-grade-fail' : ''}" style="background:#f1f5f9;">${effortAllEmpty ? "-" : toArabicDigits(comp.effort)}</td>
+                        <td class="${finR1 !== null && finR1 !== "غ" && finR1Num < 50 ? 'card-grade-fail' : ''}">${finR1 === "غ" ? "غ" : (finR1 === null ? "-" : toArabicDigits(finR1Num))}</td>
                         <td class="${!isSubAbsent1 && hasFinalGrade1 && finalG1 < 50 ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1) : "-")}</td>
                         <td class="${boostedR1 ? 'card-decision-boost' : (!isSubAbsent1 && hasFinalGrade1 && finalG1After < 50 ? 'card-grade-fail' : '')}" style="background:#eafaf0;">${isSubAbsent1 ? "غ" : (hasFinalGrade1 ? toArabicDigits(finalG1After) : "-")}</td>
-                        <td>${finR2 === "غ" ? "غ" : (finR2 === null ? "-" : toArabicDigits(finR2Num))}</td>
+                        <td class="${finR2 !== null && finR2 !== "غ" && finR2Num < 50 ? 'card-grade-fail' : ''}">${finR2 === "غ" ? "غ" : (finR2 === null ? "-" : toArabicDigits(finR2Num))}</td>
                         <td class="${!isSubAbsent2 && hasFinalGrade2 && finalG2 < 50 ? 'card-grade-fail' : ''}" style="background:#eff6ff;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2) : "-")}</td>
                         <td class="${boostedR2 ? 'card-decision-boost' : (!isSubAbsent2 && hasFinalGrade2 && finalG2After < 50 ? 'card-grade-fail' : '')}" style="background:#eafaf0;">${isSubAbsent2 ? "غ" : (hasFinalGrade2 ? toArabicDigits(finalG2After) : "-")}</td>
                     </tr>
