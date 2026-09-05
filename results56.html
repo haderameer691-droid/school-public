@@ -330,7 +330,7 @@
     <div id="completionRegisterContainer"></div>
     <div id="simpleCardsContainer"></div>
 
-    <div id="decisionToolContainer" style="display:none;">
+    <div id="decisionToolContainer" style="position:absolute; visibility:hidden; top:-9999px; left:-9999px; width:1px; height:1px; overflow:hidden;">
         <div style="text-align:center; padding:12px; background:#fff; border-bottom:2px solid #000;">
             <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeDecisionTool()">🔙 عودة إلى واجهة النتائج</button>
         </div>
@@ -1796,11 +1796,29 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             document.getElementById('advancedCardsContainer').style.display = 'none';
             document.getElementById('completionRegisterContainer').style.display = 'none';
             document.getElementById('simpleCardsContainer').style.display = 'none';
-            document.getElementById('decisionToolContainer').style.display = 'block';
+            const dt = document.getElementById('decisionToolContainer');
+            dt.style.position = 'static';
+            dt.style.visibility = 'visible';
+            dt.style.top = 'auto';
+            dt.style.left = 'auto';
+            dt.style.width = '100%';
+            dt.style.height = 'auto';
+            dt.style.overflow = 'visible';
             window.scrollTo(0, 0);
         }
         function closeDecisionTool() {
-            document.getElementById('decisionToolContainer').style.display = 'none';
+            const frame = document.getElementById('decisionToolFrame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.postMessage({ type: 'FORCE_SAVE_BEFORE_HIDE' }, '*');
+            }
+            const dt = document.getElementById('decisionToolContainer');
+            dt.style.position = 'absolute';
+            dt.style.visibility = 'hidden';
+            dt.style.top = '-9999px';
+            dt.style.left = '-9999px';
+            dt.style.width = '1px';
+            dt.style.height = '1px';
+            dt.style.overflow = 'hidden';
             document.getElementById('mainSystemContainer').style.display = 'block';
         }
         // عند إعلان الإطار المضمّن جاهزيته، نرسل له نفس بيانات النسخة الاحتياطية (بدون تصدير/استيراد يدوي)
