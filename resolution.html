@@ -965,6 +965,30 @@
     /* ============================= التهيئة الأولى عند فتح الصفحة ============================= */
     setPrintOrientation('portrait');
     initResumeOption();
+
+    /* ============================= تكامل اختياري مع ملف النتائج (لا يغيّر أي عمل قائم) ============================= */
+    /* هذا الجزء إضافي بالكامل: إن فُتح هذا الملف بمفرده كما كان، لن يعمل شيء هنا لأنه لا يوجد أب (parent) يرسل رسالة.
+       أما إن فُتح هذا الملف داخل إطار مضمّن من ملف النتائج، فسيستقبل بيانات النسخة الاحتياطية مباشرة دون الحاجة لرفع ملف JSON يدويًا. */
+    window.addEventListener('message', function(ev) {
+        if (!ev.data || ev.data.type !== 'RESULTS_FILE_BACKUP_DATA') return;
+        try {
+            backupData = ev.data.payload;
+            addedOverrides = {};
+            document.getElementById('uploadStatus').innerHTML = `<div class="status-msg status-ok">✅ تم تحميل بيانات النتائج مباشرة.</div>`;
+            document.getElementById('controlsRow').style.display = 'flex';
+            document.getElementById('actionRow').style.display = 'flex';
+            populateClassDivisionFilters();
+            showAssumptions();
+            renderReport();
+            saveAutoState();
+            initResumeOption();
+        } catch (err) {
+            document.getElementById('uploadStatus').innerHTML = `<div class="status-msg status-warn">❌ تعذر تحميل البيانات المرسلة من ملف النتائج.</div>`;
+        }
+    });
+    if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'DECISION_TOOL_READY' }, '*');
+    }
 </script>
 </body>
 </html>
