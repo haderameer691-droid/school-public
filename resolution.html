@@ -973,15 +973,20 @@
         if (!ev.data || ev.data.type !== 'RESULTS_FILE_BACKUP_DATA') return;
         try {
             backupData = ev.data.payload;
-            addedOverrides = {};
+            // نحافظ على درجات القرار المحفوظة تلقائيًا من آخر مرة، بدل تصفيرها في كل فتح جديد
+            const saved = loadAutoState();
+            addedOverrides = (saved && saved.addedOverrides) ? saved.addedOverrides : {};
             document.getElementById('uploadStatus').innerHTML = `<div class="status-msg status-ok">✅ تم تحميل بيانات النتائج مباشرة.</div>`;
             document.getElementById('controlsRow').style.display = 'flex';
             document.getElementById('actionRow').style.display = 'flex';
             populateClassDivisionFilters();
+            if (saved && saved.decisionValue !== undefined) {
+                document.getElementById('decisionValueInput').value = saved.decisionValue;
+            }
             showAssumptions();
             renderReport();
             saveAutoState();
-            initResumeOption();
+            document.getElementById('resumeBox').innerHTML = '';
         } catch (err) {
             document.getElementById('uploadStatus').innerHTML = `<div class="status-msg status-warn">❌ تعذر تحميل البيانات المرسلة من ملف النتائج.</div>`;
         }
