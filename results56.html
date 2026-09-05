@@ -279,6 +279,7 @@
                 <button class="btn btn-cards-advanced" style="background:#5b21b6;" onclick="generateFinalYearCompletionRegister()">📋 سجل المكملين والراسبين (الدرجة النهائية)</button>
                 <button class="btn btn-cards-advanced" style="background:#166534;" onclick="generateCurrentExamReportCards()">🗂️ تقرير درجات الامتحان الحالي (كروت)</button>
                 <button class="btn btn-cards-advanced" style="background:#8b0000;" onclick="generateCompletionFailureRegister()">📋 سجل المكملين والراسبين</button>
+                <button class="btn btn-cards-advanced" style="background:#166534;" onclick="openDecisionTool()">🧮 أداة درجات القرار (٥-١٥)</button>
                 <button class="btn btn-print" onclick="window.print()">🖨️ طباعة السجل والاتمتة</button>
                 <button class="btn btn-clear-grades" onclick="clearSelectedGrades()">🧹 مسح الدرجات للمحددين</button>
                 <button class="btn btn-clear-all" onclick="clearAllData()">🗑️ تفريغ السجل الحالي</button>
@@ -328,6 +329,13 @@
     <div id="advancedCardsContainer"></div>
     <div id="completionRegisterContainer"></div>
     <div id="simpleCardsContainer"></div>
+
+    <div id="decisionToolContainer" style="display:none;">
+        <div style="text-align:center; padding:12px; background:#fff; border-bottom:2px solid #000;">
+            <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeDecisionTool()">🔙 عودة إلى واجهة النتائج</button>
+        </div>
+        <iframe id="decisionToolFrame" src="resolution.html" style="width:100%; height:calc(100vh - 66px); border:none; display:block;"></iframe>
+    </div>
 
     <div id="importModal" class="custom-modal">
         <div class="modal-content">
@@ -1781,6 +1789,34 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             if(e.target == document.getElementById('migrateStudentModal')) closeMigrateStudentModal();
         }
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
+
+        /* ============================= تضمين أداة درجات القرار داخل الواجهة (إضافة فقط، لا تُغيّر أي دالة قائمة) ============================= */
+        function openDecisionTool() {
+            document.getElementById('mainSystemContainer').style.display = 'none';
+            document.getElementById('advancedCardsContainer').style.display = 'none';
+            document.getElementById('completionRegisterContainer').style.display = 'none';
+            document.getElementById('simpleCardsContainer').style.display = 'none';
+            document.getElementById('decisionToolContainer').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+        function closeDecisionTool() {
+            document.getElementById('decisionToolContainer').style.display = 'none';
+            document.getElementById('mainSystemContainer').style.display = 'block';
+        }
+        // عند إعلان الإطار المضمّن جاهزيته، نرسل له نفس بيانات النسخة الاحتياطية (بدون تصدير/استيراد يدوي)
+        window.addEventListener('message', function(ev) {
+            if (!ev.data || ev.data.type !== 'DECISION_TOOL_READY') return;
+            const frame = document.getElementById('decisionToolFrame');
+            if (!frame || !frame.contentWindow) return;
+            let backup = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.includes("db_") || key === "advSchoolGlobalInfo" || key === "advFooterInfoData") {
+                    backup[key] = localStorage.getItem(key);
+                }
+            }
+            frame.contentWindow.postMessage({ type: 'RESULTS_FILE_BACKUP_DATA', payload: backup }, '*');
+        });
     </script>
 </body>
 </html>
