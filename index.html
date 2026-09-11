@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة الإدارة المدرسية - teacher علياء</title>
+    <title>بوابة الإدارة المدرسية - teacher  علياء</title>
     <style>
         * {
             box-sizing: border-box;
@@ -219,22 +219,44 @@
     </div>
 
     <script>
+        // ===== لتغيير كلمة المرور مستقبلاً =====
+        // 1) غيّري القيمة هنا: correctPass
+        // 2) زيدي رقم الإصدار CREDENTIALS_VERSION بمقدار 1 (مثلاً من 1 الى 2)
+        // بمجرد رفع الملف، سيتم طرد كل من كان مسجلاً دخوله سابقاً تلقائياً
+        const correctUser = "abdallah";
+        const correctPass = "2004";
+        const CREDENTIALS_VERSION = 1;
+
+        // مدة صلاحية الجلسة: أسبوع واحد بالمللي ثانية
+        const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
+
         window.onload = function() {
-            if (localStorage.getItem("isLoggedIn") === "true") {
+            const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+            const lastActivity = parseInt(localStorage.getItem("lastActivity"), 10);
+            const storedVersion = parseInt(localStorage.getItem("credentialsVersion"), 10);
+
+            const sessionValid = isLoggedIn && lastActivity && (Date.now() - lastActivity < SESSION_DURATION);
+            const versionValid = storedVersion === CREDENTIALS_VERSION;
+
+            if (sessionValid && versionValid) {
                 showDashboard();
+            } else {
+                // انتهت مدة الجلسة، أو تغيّرت كلمة المرور، أو لا توجد جلسة صالحة: تسجيل خروج تلقائي
+                localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("lastActivity");
+                localStorage.removeItem("credentialsVersion");
             }
         };
 
         function checkLogin() {
-            const correctUser = "abdallah";
-            const correctPass = "2004";
-
             const userInp = document.getElementById("username").value;
             const passInp = document.getElementById("password").value;
             const errorMsg = document.getElementById("errorMessage");
 
             if (userInp === correctUser && passInp === correctPass) {
                 localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("lastActivity", Date.now().toString());
+                localStorage.setItem("credentialsVersion", CREDENTIALS_VERSION.toString());
                 showDashboard();
             } else {
                 errorMsg.style.display = "block";
@@ -242,6 +264,8 @@
         }
 
         function showDashboard() {
+            // تحديث وقت آخر نشاط في كل مرة يتم فيها الدخول للوحة (يمدد الأسبوع من آخر زيارة)
+            localStorage.setItem("lastActivity", Date.now().toString());
             document.getElementById("loginBox").style.display = "none";
             document.getElementById("dashboardBox").style.display = "block";
             document.body.style.alignItems = "flex-start";
@@ -250,6 +274,8 @@
 
         function logout() {
             localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("lastActivity");
+            localStorage.removeItem("credentialsVersion");
             location.reload(); 
         }
     </script>
