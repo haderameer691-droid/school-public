@@ -341,6 +341,7 @@
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body { margin: 0 !important; padding: 0 !important; background-color: #fff; font-family: 'Cairo', sans-serif; margin-bottom: 0px !important; }
             .controls-container, .actions-col, .save-indicator, .custom-modal, .no-print-btn, .system-footer-view { display: none !important; }
+            [data-subject-idx] { display: table-cell !important; }
             .custom-select, .editable-input-header { border: none !important; background: transparent !important; appearance: none !important; padding: 0 !important; color: #000 !important; }
             
             /* إظهار التذييل النظيف أسفل جدول الإحصاء فقط عند الطباعة */
@@ -475,6 +476,12 @@
                             <option value="راسب">🔍 التلاميذ الراسبون فقط</option>
                         </select>
                     </div>
+                    <div class="filter-group-box">
+                        <span style="font-weight: bold; color: #b7791f;">📘 تصفية حسب المادة:</span>
+                        <select id="subjectFilterSelect" class="custom-select" onchange="applySubjectFilter()">
+                            <option value="all" selected>عرض كل المواد</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -602,6 +609,7 @@
 
     <script>
         let currentSubjects = [];
+        let activeSubjectFilterIndex = -1;
 
         function getPassingGrade() {
             const selectedClass = document.getElementById('classSelect').value;
@@ -747,11 +755,22 @@
                 <th class="sticky-id-col" rowspan="2" style="width:80px;">رقم القيد</th>
                 <th class="sticky-name-col" rowspan="2" style="width:180px;">اسم التلميذ</th>`;
             
-            currentSubjects.forEach(subject => {
-                headerHTML += `<th class="subject-col rotated-th" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
+            currentSubjects.forEach((subject, idx) => {
+                headerHTML += `<th class="subject-col rotated-th" data-subject-idx="${idx}" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
             });
             headerRow.innerHTML = headerHTML + `<th colspan="2">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="font-size: 12px; width:120px;">مواد الإكمال</th><th rowspan="2" class="actions-col" style="width:170px;">إجراءات<br><label style="font-size:11px; font-weight:normal; display:inline-flex; align-items:center; gap:3px; margin-top:3px; cursor:pointer;"><input type="checkbox" id="selectAllRowsCheckbox" onchange="toggleSelectAllRows(this)"> تحديد الكل</label></th>`;
             headerRow2.innerHTML = `<th class="total-sub-th">رقماً</th><th class="total-sub-th">كتابة</th>`;
+
+            const subjectFilterSelect = document.getElementById('subjectFilterSelect');
+            if (subjectFilterSelect) {
+                let optionsHTML = `<option value="all">عرض كل المواد</option>`;
+                currentSubjects.forEach((subject, idx) => {
+                    optionsHTML += `<option value="${idx}">${subject}</option>`;
+                });
+                subjectFilterSelect.innerHTML = optionsHTML;
+                subjectFilterSelect.value = "all";
+            }
+            activeSubjectFilterIndex = -1;
 
             requestAnimationFrame(() => {
                 const row1Height = headerRow.getBoundingClientRect().height;
@@ -987,7 +1006,8 @@
             const subjectsCount = currentSubjects.length;
             for(let i = 0; i < subjectsCount; i++) {
                 let val = (student.grades && student.grades[i] !== undefined) ? student.grades[i] : "";
-                gradesHTML += `<td><input type="text" class="direct-input grade-input-field" value="${val}" oninput="onFieldInputHandler()" autocomplete="off"></td>`;
+                const hideStyle = (activeSubjectFilterIndex !== -1 && activeSubjectFilterIndex !== i) ? ' style="display:none;"' : '';
+                gradesHTML += `<td data-subject-idx="${i}"${hideStyle}><input type="text" class="direct-input grade-input-field" value="${val}" oninput="onFieldInputHandler()" autocomplete="off"></td>`;
             }
 
             tr.innerHTML = `
@@ -1062,6 +1082,17 @@
                 calculateResults();
                 saveAllStudentsData();
             }
+        }
+
+        function applySubjectFilter() {
+            const select = document.getElementById('subjectFilterSelect');
+            const val = select.value;
+            activeSubjectFilterIndex = (val === "all") ? -1 : parseInt(val);
+
+            document.querySelectorAll('[data-subject-idx]').forEach(el => {
+                const idx = parseInt(el.dataset.subjectIdx);
+                el.style.display = (activeSubjectFilterIndex === -1 || idx === activeSubjectFilterIndex) ? '' : 'none';
+            });
         }
 
         function toggleSelectAllRows(checkbox) {
