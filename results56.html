@@ -301,6 +301,12 @@
                         <option value="غائب">الغائبون بالكامل</option>
                     </select>
                 </div>
+                <div>
+                    <span>📚 تصفية حسب المادة (لتسهيل إدخال الدرجات):</span>
+                    <select id="subjectFilterSelect" class="custom-select" style="width: 200px;" onchange="filterBySubject()">
+                        <option value="ALL">جميع المواد</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -508,14 +514,37 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                     row.style.display = 'none'; 
                 }
             });
+            filterBySubject();
+        }
+
+        function filterBySubject() {
+            const sel = document.getElementById('subjectFilterSelect');
+            if(!sel) return;
+            const val = sel.value;
+            document.querySelectorAll('[data-subj-idx]').forEach(el => {
+                el.style.display = (val === "ALL" || el.getAttribute('data-subj-idx') === val) ? '' : 'none';
+            });
         }
 
         function renderTableStructures() {
             let html = `<th rowspan="2" class="sticky-index-col" style="width: 35px;">ت</th><th rowspan="2" class="sticky-id-col" style="width: 80px;">رقم القيد</th><th rowspan="2" class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
-            currentSubjects.forEach(s => { html += `<th rowspan="2" class="rotated-th"><span class="rotated-text">${s}</span></th>`; });
+            currentSubjects.forEach((s, si) => { html += `<th rowspan="2" class="rotated-th" data-subj-idx="${si}"><span class="rotated-text">${s}</span></th>`; });
             html += `<th colspan="2" class="main-header-cell">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="width:130px;">دروس الإكمال</th><th rowspan="2" class="select-col" style="width:45px;">تحديد<br><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllStudents(this)" title="تحديد / إلغاء تحديد الكل"></th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
             document.getElementById('tableHeaderRow2').innerHTML = `<th class="sub-header-cell">رقمًا</th><th class="sub-header-cell" style="width:130px;">كتابةً</th>`;
+
+            const subjSelect = document.getElementById('subjectFilterSelect');
+            if(subjSelect) {
+                const prevVal = subjSelect.value || "ALL";
+                subjSelect.innerHTML = '<option value="ALL">جميع المواد</option>';
+                currentSubjects.forEach((s, si) => {
+                    const opt = document.createElement('option');
+                    opt.value = si; opt.textContent = s;
+                    subjSelect.appendChild(opt);
+                });
+                subjSelect.value = prevVal;
+                if(subjSelect.selectedIndex === -1) subjSelect.value = "ALL";
+            }
         }
 
         function getClassDivisionPrefix() {
@@ -554,7 +583,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let gHtml = '';
             for(let i=0; i<currentSubjects.length; i++) {
                 let v = (student.grades && student.grades[i] !== undefined) ? student.grades[i] : "";
-                gHtml += `<td><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)"></td>`;
+                gHtml += `<td data-subj-idx="${i}"><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)"></td>`;
             }
             tr.innerHTML = `
                 <td class="row-index sticky-index-col">${toArabicDigits(idx)}</td>
@@ -739,7 +768,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         function addStudentRow() {
             const tbody = document.getElementById('tableBody');
             const tr = createRowElement({id:"", name:"", grades:new Array(currentSubjects.length).fill("")}, tbody.querySelectorAll('.student-row').length + 1);
-            tbody.appendChild(tr); saveAllStudentsData(); tr.querySelector('.student-name-input').focus();
+            tbody.appendChild(tr); saveAllStudentsData(); filterBySubject(); tr.querySelector('.student-name-input').focus();
         }
 
         function deleteStudentRow(button) {
