@@ -227,8 +227,8 @@
         const correctPass = "2004";
         const CREDENTIALS_VERSION = 1;
 
-        // مدة صلاحية الجلسة: أسبوع واحد بالمللي ثانية
-        const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
+        // مدة صلاحية الجلسة: شهر واحد (30 يوم) بالمللي ثانية
+        const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
 
         window.onload = function() {
             const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
