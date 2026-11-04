@@ -208,6 +208,9 @@
             body.simple-cards-view-active .simple-report-card { width: 100% !important; max-width: 100% !important; min-height: 21cm !important; margin: 0 auto !important; padding: 18px 25px !important; border: 3px solid #000 !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; overflow: visible !important; page-break-inside: avoid !important; page-break-after: always !important; }
             .simple-report-card:last-of-type { page-break-after: avoid !important; }
         }
+            .subj-off { display: none !important; }
+        .subj-mgr-row { display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #ddd; font-weight:600; font-size:14px; }
+        .subj-mgr-row button { padding:2px 8px; font-size:12px; margin-right:4px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -272,6 +275,7 @@
                 <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ</button>
                 <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد من إكسل</button>
                 <button class="btn btn-excel" style="background:#0e7c66;" onclick="openPasteGradesModal()">📋 لصق درجات مادة</button>
+                <button class="btn" style="background:#b45309; color:#fff;" onclick="openSubjectsManager()">📚 إدارة المواد الدراسية</button>
                 <button class="btn btn-migrate" onclick="openMigrationModal()">📦 ترحيل واستيراد أسماء التلاميذ</button>
                 <button class="btn btn-backup" onclick="exportFullBackup()">📤 تصدير نسخة احتياطية</button>
                 <button class="btn btn-restore" onclick="triggerBackupUpload()">📥 استيراد نسخة احتياطية</button>
@@ -342,6 +346,27 @@
             <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeDecisionTool()">🔙 عودة إلى واجهة النتائج</button>
         </div>
         <iframe id="decisionToolFrame" src="resolution.html" style="width:100%; height:calc(100vh - 66px); border:none; display:block;"></iframe>
+    </div>
+
+    <div id="subjectsModal" class="custom-modal">
+        <div class="modal-content" style="width:60%; max-height:80vh; overflow:auto; margin:5% auto;">
+            <h3 style="font-weight:700; color:#b45309;">📚 إدارة المواد الدراسية</h3>
+            <p style="font-size:13px; font-weight:600;">المواد الفعّالة للصف والشعبة: <span id="subjMgrTarget" style="color:#0d2c54;"></span><br>
+            <span style="font-size:11px; color:#666; font-weight:500;">(يتبع الصف والشعبة المختارين أعلى الصفحة. الدرجات المسجلة لا تُفقد عند إلغاء تفعيل مادة أو حذفها.)</span></p>
+            <div id="subjMgrList"></div>
+            <div id="subjMgrArchived" style="margin-top:12px;"></div>
+            <div style="margin-top:14px; padding-top:10px; border-top:2px solid #000;">
+                <b>إضافة مادة جديدة:</b>
+                <input type="text" id="subjNewName" class="custom-select" style="width:220px;" placeholder="اسم المادة">
+                <button class="btn btn-add" onclick="addNewSubject()">➕ إضافة</button>
+                <div style="font-size:11px; color:#666;">تُفعَّل المادة الجديدة في الصف والشعبة الحاليين فقط، ويمكنك تعميمها بالأزرار أدناه.</div>
+            </div>
+            <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-migrate" onclick="copySubjectsTo('class')">📋 تطبيق هذا الاختيار على كل شعب هذا الصف</button>
+                <button class="btn btn-migrate" onclick="copySubjectsTo('all')">📋 تطبيقه على كل الصفوف والشعب</button>
+                <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeSubjectsManager()">إغلاق</button>
+            </div>
+        </div>
     </div>
 
     <div id="importModal" class="custom-modal">
@@ -448,6 +473,83 @@ value="د">د</option><option                   value="بدون شعبة">بدو
     <script>
         const currentSubjects = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
 
+        // ===== إدارة المواد: القائمة الرئيسية ثابتة الترتيب (الدرجات مرتبطة بالترتيب) والتحكم بالتفعيل/الإخفاء فقط =====
+        const SUBJ_CFG_KEY = 'advSubjectsConfig';
+        let subjCfg = { extra: [], renamed: {}, archived: [], off: {} };
+        try { const _sc = JSON.parse(localStorage.getItem(SUBJ_CFG_KEY) || 'null'); if(_sc) subjCfg = Object.assign(subjCfg, _sc); } catch(e) {}
+        subjCfg.extra.forEach(n => currentSubjects.push(n));
+        Object.keys(subjCfg.renamed).forEach(i => { if(currentSubjects[i] !== undefined) currentSubjects[i] = subjCfg.renamed[i]; });
+        function saveSubjCfg() { localStorage.setItem(SUBJ_CFG_KEY, JSON.stringify(subjCfg)); }
+        function subjGroupKey(cl, div) { return cl + '|' + div; }
+        function curCl() { return document.getElementById('classSelect').value; }
+        function curDiv() { return document.getElementById('divisionSelect').value; }
+        function isSubjectActive(idx, cl, div) {
+            if(cl === undefined) cl = curCl();
+            if(div === undefined) div = curDiv();
+            if(subjCfg.archived.indexOf(idx) !== -1) return false;
+            return (subjCfg.off[subjGroupKey(cl, div)] || []).indexOf(idx) === -1;
+        }
+        function activeSubjectsCount(cl, div) { let c = 0; currentSubjects.forEach((x, i) => { if(isSubjectActive(i, cl, div)) c++; }); return c; }
+        function allSubjectGroups() {
+            const g = [];
+            Array.from(document.getElementById('classSelect').options).forEach(c => {
+                Array.from(document.getElementById('divisionSelect').options).forEach(d => g.push(subjGroupKey(c.value, d.value)));
+            });
+            return g;
+        }
+        function applySubjectsChange() { saveSubjCfg(); renderTableStructures(); loadCurrentGroupData(); renderSubjectsManager(); showSaveIndicator(); }
+        function openSubjectsManager() { renderSubjectsManager(); document.getElementById('subjectsModal').style.display = 'block'; }
+        function closeSubjectsManager() { document.getElementById('subjectsModal').style.display = 'none'; }
+        function renderSubjectsManager() {
+            const key = subjGroupKey(curCl(), curDiv());
+            const off = subjCfg.off[key] || [];
+            document.getElementById('subjMgrTarget').textContent = curCl() + ' / ' + curDiv();
+            let h = '', a = '';
+            currentSubjects.forEach((s, i) => {
+                if(subjCfg.archived.indexOf(i) !== -1) {
+                    a += `<div class="subj-mgr-row"><span>${s}</span><button onclick="restoreSubject(${i})">♻️ استرجاع</button></div>`;
+                    return;
+                }
+                h += `<div class="subj-mgr-row"><label><input type="checkbox" ${off.indexOf(i) === -1 ? 'checked' : ''} onchange="toggleSubjectForGroup(${i}, this.checked)"> ${s}</label><span><button onclick="renameSubject(${i})">✏️ تعديل الاسم</button><button onclick="archiveSubject(${i})">🗑️ حذف</button></span></div>`;
+            });
+            document.getElementById('subjMgrList').innerHTML = h;
+            document.getElementById('subjMgrArchived').innerHTML = a ? '<b>المواد المحذوفة (يمكن استرجاعها مع درجاتها):</b>' + a : '';
+        }
+        function toggleSubjectForGroup(idx, on) {
+            const key = subjGroupKey(curCl(), curDiv());
+            let off = (subjCfg.off[key] || []).filter(x => x !== idx);
+            if(!on) off.push(idx);
+            subjCfg.off[key] = off; applySubjectsChange();
+        }
+        function addNewSubject() {
+            const inp = document.getElementById('subjNewName'); const name = inp.value.trim();
+            if(!name) { alert('⚠️ اكتب اسم المادة أولاً.'); return; }
+            if(currentSubjects.indexOf(name) !== -1) { alert('⚠️ هذه المادة موجودة مسبقاً (قد تكون ضمن المواد المحذوفة، يمكنك استرجاعها).'); return; }
+            const idx = currentSubjects.length;
+            currentSubjects.push(name); subjCfg.extra.push(name);
+            const mine = subjGroupKey(curCl(), curDiv());
+            allSubjectGroups().forEach(k => { if(k !== mine) { (subjCfg.off[k] = subjCfg.off[k] || []).push(idx); } });
+            inp.value = ''; applySubjectsChange();
+        }
+        function renameSubject(idx) {
+            const n = prompt('الاسم الجديد للمادة:', currentSubjects[idx]);
+            if(n === null) return; const name = n.trim();
+            if(!name || name === currentSubjects[idx]) return;
+            if(currentSubjects.indexOf(name) !== -1) { alert('⚠️ يوجد مادة بهذا الاسم.'); return; }
+            currentSubjects[idx] = name; subjCfg.renamed[idx] = name; applySubjectsChange();
+        }
+        function archiveSubject(idx) {
+            if(!confirm(`حذف مادة «${currentSubjects[idx]}» من المنظومة؟\nستختفي من كل الصفوف والطباعة، لكن درجاتها المحفوظة تبقى ويمكن استرجاعها لاحقاً.`)) return;
+            if(subjCfg.archived.indexOf(idx) === -1) subjCfg.archived.push(idx);
+            applySubjectsChange();
+        }
+        function restoreSubject(idx) { subjCfg.archived = subjCfg.archived.filter(x => x !== idx); applySubjectsChange(); }
+        function copySubjectsTo(scope) {
+            const src = (subjCfg.off[subjGroupKey(curCl(), curDiv())] || []).slice();
+            allSubjectGroups().forEach(g => { if(scope === 'all' || g.split('|')[0] === curCl()) subjCfg.off[g] = src.slice(); });
+            applySubjectsChange(); alert('✅ تم التطبيق.');
+        }
+
         function toArabicDigits(num) {
             if(num === null || num === undefined || num === "") return "٠";
             return num.toString().replace(/[0-9]/g, function (w) { return ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'][+w]; });
@@ -549,7 +651,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
 
         function renderTableStructures() {
             let html = `<th rowspan="2" class="sticky-index-col" style="width: 35px;">ت</th><th rowspan="2" class="sticky-id-col" style="width: 80px;">رقم القيد</th><th rowspan="2" class="sticky-name-col" style="width: 180px;">اسم التلميذ</th>`;
-            currentSubjects.forEach((s, si) => { html += `<th rowspan="2" class="rotated-th" data-subj-idx="${si}"><span class="rotated-text">${s}</span></th>`; });
+            currentSubjects.forEach((s, si) => { html += `<th rowspan="2" class="rotated-th${isSubjectActive(si) ? '' : ' subj-off'}" data-subj-idx="${si}"><span class="rotated-text">${s}</span></th>`; });
             html += `<th colspan="2" class="main-header-cell">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="width:130px;">دروس الإكمال</th><th rowspan="2" class="select-col" style="width:45px;">تحديد<br><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllStudents(this)" title="تحديد / إلغاء تحديد الكل"></th><th rowspan="2" class="actions-col" style="width:150px;">إجراءات</th>`;
             document.getElementById('tableHeaderRow').innerHTML = html;
             document.getElementById('tableHeaderRow2').innerHTML = `<th class="sub-header-cell">رقمًا</th><th class="sub-header-cell" style="width:130px;">كتابةً</th>`;
@@ -559,6 +661,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 const prevVal = subjSelect.value || "ALL";
                 subjSelect.innerHTML = '<option value="ALL">جميع المواد</option>';
                 currentSubjects.forEach((s, si) => {
+                    if(!isSubjectActive(si)) return;
                     const opt = document.createElement('option');
                     opt.value = si; opt.textContent = s;
                     subjSelect.appendChild(opt);
@@ -572,6 +675,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 const prevPasteVal = pasteSubjSelect.value;
                 pasteSubjSelect.innerHTML = '';
                 currentSubjects.forEach((s, si) => {
+                    if(!isSubjectActive(si)) return;
                     const opt = document.createElement('option');
                     opt.value = si; opt.textContent = s;
                     pasteSubjSelect.appendChild(opt);
@@ -609,7 +713,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             showSaveIndicator();
         }
 
-        function onClassOrDivisionChange() { document.getElementById('searchInput').value = ""; document.getElementById('statusFilterSelect').value = "ALL"; saveSchoolInfo(); loadCurrentGroupData(); }
+        function onClassOrDivisionChange() { document.getElementById('searchInput').value = ""; document.getElementById('statusFilterSelect').value = "ALL"; saveSchoolInfo(); renderTableStructures(); loadCurrentGroupData(); }
         function onExamConfigChange() { saveSchoolInfo(); loadCurrentGroupData(); }
 
         function createRowElement(student, idx) {
@@ -617,7 +721,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let gHtml = '';
             for(let i=0; i<currentSubjects.length; i++) {
                 let v = (student.grades && student.grades[i] !== undefined) ? student.grades[i] : "";
-                gHtml += `<td data-subj-idx="${i}"><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)"></td>`;
+                gHtml += `<td data-subj-idx="${i}"${isSubjectActive(i) ? '' : ' class="subj-off"'}><input type="text" class="direct-input grade-input-field" value="${v}" oninput="onGradeInput(this)"></td>`;
             }
             tr.innerHTML = `
                 <td class="row-index sticky-index-col">${toArabicDigits(idx)}</td>
@@ -661,6 +765,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 const fields = row.querySelectorAll('.grade-input-field');
                 
                 fields.forEach((field, idx) => {
+                    if(!isSubjectActive(idx)) return;
                     let raw = field.value.trim();
                     let eng = toEnglishDigits(raw);
                     if(raw !== "") { active = true; subStats[idx].total++; }
@@ -699,7 +804,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 totalStudentsInDivision++;
 
                 let isAllAbsent = true;
-                fields.forEach(f => {
+                fields.forEach((f, fi) => {
+                    if(!isSubjectActive(fi)) return;
                     if (f.value.trim() !== "" && toEnglishDigits(f.value.trim()) !== "غ") {
                         isAllAbsent = false;
                     }
@@ -745,7 +851,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             });
 
             let headerHtml = `<tr><th class="stats-label-col">المادة الدراسية</th>`;
-            currentSubjects.forEach(sub => { headerHtml += `<th>${sub}</th>`; });
+            currentSubjects.forEach((sub, si) => { if(!isSubjectActive(si)) return; headerHtml += `<th>${sub}</th>`; });
             headerHtml += `<th class="total-cell-highlight">الإجمالي الكلي للشعبة</th></tr>`;
             document.getElementById('statsTableHeader').innerHTML = headerHtml;
 
@@ -767,7 +873,8 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let bodyHtml = "";
             rowsConfig.forEach(rowConf => {
                 bodyHtml += `<tr><td class="stats-label-col">${rowConf.label}</td>`;
-                subStats.forEach(s => {
+                subStats.forEach((s, si) => {
+                    if(!isSubjectActive(si)) return;
                     let val = "";
                     if(rowConf.key === null) {
                         val = "-";
@@ -1163,7 +1270,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
-                if (key.includes("db_") || key === "advSchoolGlobalInfo" || key === "advFooterInfoData") {
+                if (key.includes("db_") || key === "advSchoolGlobalInfo" || key === "advFooterInfoData" || key === SUBJ_CFG_KEY) {
                     backupData[key] = localStorage.getItem(key);
                 }
             }
@@ -1234,6 +1341,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 let activeSubjectsCount = 0;
 
                 currentSubjects.forEach((sub, idx) => {
+                    if(!isSubjectActive(idx)) return;
                     let pt1 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
                     let pt2 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
                     let pt3 = parseFloat(getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
@@ -1253,6 +1361,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 });
 
                 currentSubjects.forEach((sub, idx) => {
+                    if(!isSubjectActive(idx)) return;
                     let rawT1 = getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الأول", studentName, idx);
                     let rawT2 = getGradeFromStorage(className, divisionName, "الفصل الأول", "تشرين الثاني", studentName, idx);
                     let rawT3 = getGradeFromStorage(className, divisionName, "الفصل الأول", "كانون الأول", studentName, idx);
@@ -1339,7 +1448,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 }
 
                 let realCardAverage = 0;
-                if(currentSubjects.length > 0) realCardAverage = sumFinal / currentSubjects.length;
+                const __n = activeSubjectsCount(className, divisionName); if(__n > 0) realCardAverage = sumFinal / __n;
 
                 let sumDigitsStr = toArabicDigits(sumFinal);
                 let sumWordsStr = convertTotalNumberToWords(sumFinal);
@@ -1442,6 +1551,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                 const gradeFields = row.querySelectorAll('.grade-input-field');
                 let subjectsHtml = '';
                 currentSubjects.forEach((sub, idx) => {
+                    if(!isSubjectActive(idx)) return;
                     const raw = gradeFields[idx] ? gradeFields[idx].value.trim() : '';
                     const eng = toEnglishDigits(raw);
                     const isAbsent = eng === "غ";
@@ -1533,6 +1643,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let active = false;
 
             currentSubjects.forEach((sub, idx) => {
+                    if(!isSubjectActive(idx, cl, div)) return;
                 let val;
                 if(examType === "نهاية السنة") {
                     let r1 = getGradeFromStorage(cl, div, "نهاية السنة", "الأول", studentName, idx);
@@ -1664,6 +1775,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             let active = false;
 
             currentSubjects.forEach((sub, idx) => {
+                    if(!isSubjectActive(idx, cl, div)) return;
                 let t1 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "تشرين الأول", studentName, idx)) || 0;
                 let t2 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "تشرين الثاني", studentName, idx)) || 0;
                 let t3 = parseFloat(getGradeFromStorage(cl, div, "الفصل الأول", "كانون الأول", studentName, idx)) || 0;
@@ -1730,7 +1842,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                                 const result = computeStudentFinalYearStatus(cl, div, studentName);
                                 if(result.statusTxt === "مكمل" || result.statusTxt === "راسب") {
                                     rows.push({ name: studentName, classDivision: divLabel, subjects: result.failList.join(" ، "), status: result.statusTxt });
-                                    const summary = ensureSummary(divLabel);
+                                    const summary = ensureSummary(divLabel); summary.cl = cl; summary.div = div;
                                     if(result.statusTxt === "مكمل") summary.complete++; else summary.fail++;
                                     result.failList.forEach(subj => { summary.subjectFails[subj] = (summary.subjectFails[subj] || 0) + 1; });
                                 }
@@ -1790,19 +1902,21 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             // إحصائية عدد الراسبين في كل مادة دراسية لكل صف وشعبة
             let subjectStatsRowsHtml = '';
             if(summaryLabels.length === 0) {
-                subjectStatsRowsHtml = `<tr><td colspan="${currentSubjects.length + 1}">لا توجد بيانات</td></tr>`;
+                subjectStatsRowsHtml = `<tr><td colspan="${currentSubjects.length - subjCfg.archived.length + 1}">لا توجد بيانات</td></tr>`;
             } else {
                 summaryLabels.forEach(label => {
                     const s = classDivSummaryMap[label];
                     subjectStatsRowsHtml += `<tr><td>${label}</td>`;
-                    currentSubjects.forEach(sub => {
-                        subjectStatsRowsHtml += `<td>${toArabicDigits(s.subjectFails[sub] || 0)}</td>`;
+                    currentSubjects.forEach((sub, si) => {
+                        if(subjCfg.archived.indexOf(si) !== -1) return;
+                        subjectStatsRowsHtml += (s.cl !== undefined && !isSubjectActive(si, s.cl, s.div)) ? `<td>-</td>` : `<td>${toArabicDigits(s.subjectFails[sub] || 0)}</td>`;
                     });
                     subjectStatsRowsHtml += `</tr>`;
                 });
             }
             let subjectTotalsRow = `<tr style="background:#e2e8f0;"><td>الإجمالي الكلي</td>`;
-            currentSubjects.forEach(sub => {
+            currentSubjects.forEach((sub, si) => {
+                if(subjCfg.archived.indexOf(si) !== -1) return;
                 let subTotal = 0;
                 summaryLabels.forEach(label => { subTotal += (classDivSummaryMap[label].subjectFails[sub] || 0); });
                 subjectTotalsRow += `<td>${toArabicDigits(subTotal)}</td>`;
@@ -1861,7 +1975,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                         <thead>
                             <tr>
                                 <th>الصف والشعبة</th>
-                                ${currentSubjects.map(sub => `<th style="font-size:11px;">${sub}</th>`).join('')}
+                                ${currentSubjects.map((sub, si) => subjCfg.archived.indexOf(si) !== -1 ? '' : `<th style="font-size:11px;">${sub}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
@@ -1904,53 +2018,9 @@ value="د">د</option><option                   value="بدون شعبة">بدو
             if(e.target == document.getElementById('pasteGradesModal')) closePasteGradesModal();
             if(e.target == document.getElementById('migrationModal')) closeMigrationModal(); 
             if(e.target == document.getElementById('migrateStudentModal')) closeMigrateStudentModal();
+            if(e.target == document.getElementById('subjectsModal')) closeSubjectsManager();
         }
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
-
-        /* ===== التنقل بالأسهم بين خانات الجدول (إضافة فقط) ===== */
-        document.addEventListener('keydown', function(e) {
-            const el = e.target;
-            if (!el || !el.classList || !el.classList.contains('direct-input')) return;
-            const table = el.closest('#resultsTable');
-            if (!table) return;
-            const key = e.key;
-            if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(key)) return;
-            if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-
-            const row = el.closest('tr.student-row');
-            if (!row) return;
-            const rowInputs = Array.from(row.querySelectorAll('input.direct-input'));
-            const col = rowInputs.indexOf(el);
-            let target = null;
-
-            if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter') {
-                const step = (key === 'ArrowUp') ? -1 : 1;
-                let r = row;
-                do {
-                    r = step === 1 ? r.nextElementSibling : r.previousElementSibling;
-                } while (r && (!r.classList.contains('student-row') || r.offsetParent === null));
-                if (r) target = r.querySelectorAll('input.direct-input')[col];
-            } else {
-                // الصفحة من اليمين لليسار: السهم الأيسر = الخانة التالية، والأيمن = السابقة
-                const step = (key === 'ArrowLeft') ? 1 : -1;
-                // في خانتي الرقم والاسم: لا ننتقل إلا إذا كان المؤشر عند الطرف
-                if (el.classList.contains('student-id-input') || el.classList.contains('student-name-input')) {
-                    const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
-                    const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
-                    // نهاية النص في RTL = اليسار منطقيًا (نهاية القيمة)
-                    if (step === 1 && !atEnd) return;
-                    if (step === -1 && !atStart) return;
-                }
-                target = rowInputs[col + step];
-            }
-
-            if (target) {
-                e.preventDefault();
-                target.focus();
-                try { target.select(); } catch (err) {}
-            }
-        });
-
 
         /* ============================= تضمين أداة درجات القرار داخل الواجهة (إضافة فقط، لا تُغيّر أي دالة قائمة) ============================= */
         function openDecisionTool() {
