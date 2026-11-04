@@ -1907,6 +1907,51 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         }
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
 
+        /* ===== التنقل بالأسهم بين خانات الجدول (إضافة فقط) ===== */
+        document.addEventListener('keydown', function(e) {
+            const el = e.target;
+            if (!el || !el.classList || !el.classList.contains('direct-input')) return;
+            const table = el.closest('#resultsTable');
+            if (!table) return;
+            const key = e.key;
+            if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(key)) return;
+            if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+
+            const row = el.closest('tr.student-row');
+            if (!row) return;
+            const rowInputs = Array.from(row.querySelectorAll('input.direct-input'));
+            const col = rowInputs.indexOf(el);
+            let target = null;
+
+            if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter') {
+                const step = (key === 'ArrowUp') ? -1 : 1;
+                let r = row;
+                do {
+                    r = step === 1 ? r.nextElementSibling : r.previousElementSibling;
+                } while (r && (!r.classList.contains('student-row') || r.offsetParent === null));
+                if (r) target = r.querySelectorAll('input.direct-input')[col];
+            } else {
+                // الصفحة من اليمين لليسار: السهم الأيسر = الخانة التالية، والأيمن = السابقة
+                const step = (key === 'ArrowLeft') ? 1 : -1;
+                // في خانتي الرقم والاسم: لا ننتقل إلا إذا كان المؤشر عند الطرف
+                if (el.classList.contains('student-id-input') || el.classList.contains('student-name-input')) {
+                    const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+                    const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
+                    // نهاية النص في RTL = اليسار منطقيًا (نهاية القيمة)
+                    if (step === 1 && !atEnd) return;
+                    if (step === -1 && !atStart) return;
+                }
+                target = rowInputs[col + step];
+            }
+
+            if (target) {
+                e.preventDefault();
+                target.focus();
+                try { target.select(); } catch (err) {}
+            }
+        });
+
+
         /* ============================= تضمين أداة درجات القرار داخل الواجهة (إضافة فقط، لا تُغيّر أي دالة قائمة) ============================= */
         function openDecisionTool() {
             document.getElementById('mainSystemContainer').style.display = 'none';
