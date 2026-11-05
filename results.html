@@ -338,11 +338,32 @@
         .migrate-select-group { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; }
         .migrate-select-item { display: flex; align-items: center; gap: 15px; font-weight: bold; }
 
+        /* المواد المعطّلة (تبقى درجاتها محفوظة لكنها لا تظهر ولا تُحسب) */
+        .subject-inactive { display: none !important; }
+
+        /* نافذة إدارة المواد */
+        .subj-modal-box { width: 92%; max-width: 520px; margin: 4% auto; max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
+        .subj-row { display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #e5e5e5; }
+        .subj-row .subj-name { flex: 1; font-weight: bold; font-size: 15px; }
+        .subj-row.is-off .subj-name { color: #999; text-decoration: line-through; }
+        .subj-row input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
+        .subj-mini-btn { padding: 6px 10px; font-size: 12px; border: 1px solid #aaa; background: #f6f6f6; border-radius: 4px; cursor: pointer; font-family: inherit; }
+        .subj-mini-btn.danger { color: #a00; }
+        .subj-add-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .subj-add-row input[type=text] { flex: 1; padding: 9px; border: 1px solid #888; border-radius: 4px; font-size: 14px; font-family: inherit; text-align: right; }
+
+        /* أزرار التنقل العائمة (أعلى/أسفل) أثناء إدخال الدرجات */
+        .nav-float { display: none; position: fixed; top: 30%; left: 8px; z-index: 450; flex-direction: column; gap: 8px; }
+        .nav-float button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #0056b3; background: rgba(255,255,255,0.92); color: #0056b3; font-size: 22px; line-height: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: pointer; touch-action: manipulation; }
+        .nav-float button:active { background: #0056b3; color: #fff; }
+
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body { margin: 0 !important; padding: 0 !important; background-color: #fff; font-family: 'Cairo', sans-serif; margin-bottom: 0px !important; }
             .controls-container, .actions-col, .save-indicator, .custom-modal, .no-print-btn, .system-footer-view { display: none !important; }
             [data-subject-idx] { display: table-cell !important; }
+            td.subject-inactive[data-subject-idx], th.subject-inactive[data-subject-idx] { display: none !important; }
+            .nav-float { display: none !important; }
             .custom-select, .editable-input-header { border: none !important; background: transparent !important; appearance: none !important; padding: 0 !important; color: #000 !important; }
             
             /* إظهار التذييل النظيف أسفل جدول الإحصاء فقط عند الطباعة */
@@ -451,6 +472,7 @@
                     <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ واحد</button>
                     <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد التلاميذ (نسخ ولصق)</button>
                     <button class="btn btn-excel" style="background-color:#0e7c66;" onclick="openPasteGradesModal()">📋 لصق درجات مادة</button>
+                    <button class="btn" style="background-color:#6f42c1; color:#fff;" onclick="openSubjectsModal()">📚 إدارة المواد الدراسية</button>
                     <button class="btn btn-cards" onclick="generateReportCards()">🎴 توليد كارتات النتائج</button>
                     <button class="btn" style="background-color: #b7791f; color: #fff;" onclick="generateReappearFailReport()">📋 طباعة سجل المكملين والراسبين (كل الصفوف)</button>
                     <button class="btn btn-print" onclick="window.print()">🖨️ طباعة الجدول الكامل</button>
@@ -630,7 +652,47 @@
         </div>
     </div>
 
+    <!-- مودال إدارة المواد الدراسية -->
+    <div id="subjectsModal" class="custom-modal">
+        <div class="modal-content subj-modal-box">
+            <h3 style="margin-top: 0; color: #b7560b;">📚 إدارة المواد الدراسية</h3>
+            <p style="font-size: 13px; margin: 0 0 4px;">مواد: <b id="subjModalClassLabel" style="color:#0056b3;"></b></p>
+            <p style="font-size: 11px; color: #666; margin: 0 0 10px;">فعّلي أو عطّلي أي مادة بمربع الاختيار. المادة المعطّلة تختفي من الجدول والطباعة والإحصاء، وتبقى درجاتها محفوظة ولا تضيع.</p>
+            <div id="subjectsListBox"></div>
+
+            <div id="deletedSubjectsWrap" style="display:none; margin-top: 14px;">
+                <h4 style="margin: 0 0 4px;">المواد المحذوفة (يمكن استرجاعها مع درجاتها):</h4>
+                <div id="deletedSubjectsBox"></div>
+            </div>
+
+            <hr style="margin: 14px 0; border: 0; border-top: 2px solid #000;">
+            <h4 style="margin: 0 0 4px;">إضافة مادة جديدة:</h4>
+            <div class="subj-add-row">
+                <input type="text" id="newSubjectInput" placeholder="اسم المادة" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewSubject();}">
+                <button class="btn btn-add" onclick="addNewSubject()">➕ إضافة</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:8px; cursor:pointer;">
+                <input type="checkbox" id="newSubjectAllClasses"> أضيفي المادة لجميع الصفوف أيضاً
+            </label>
+
+            <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                <button class="btn" style="background-color: #6c757d; color: white;" onclick="closeSubjectsModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار التنقل العائمة -->
+    <div id="navFloat" class="nav-float no-print">
+        <div style="display:flex; justify-content:center;"><button type="button" id="navUpBtn" title="الخانة الأعلى">▲</button></div>
+        <div style="display:flex; gap:8px;">
+            <button type="button" id="navRightBtn" title="الخانة على اليمين">▶</button>
+            <button type="button" id="navLeftBtn" title="الخانة على اليسار">◀</button>
+        </div>
+        <div style="display:flex; justify-content:center;"><button type="button" id="navDownBtn" title="الخانة الأسفل">▼</button></div>
+    </div>
+
     <script>
+        let currentActive = [];
         let currentSubjects = [];
         let activeSubjectFilterIndex = -1;
 
@@ -642,15 +704,38 @@
             return 50;
         }
 
+        function getDefaultSubjectsForClass(cls) {
+            if (["الأول الابتدائي", "الثاني الابتدائي", "الثالث الابتدائي"].includes(cls)) {
+                return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
+            }
+            return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
+        }
+
+        function getSubjectsConfigKey(cls) { return `subjectsConfig_${cls}`; }
+
+        /* قائمة المواد لكل صف: [{name, active, deleted}] — الترتيب ثابت حتى لا تتأثر الدرجات المحفوظة */
+        function loadSubjectConfig(cls) {
+            try {
+                const raw = localStorage.getItem(getSubjectsConfigKey(cls));
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr) && arr.length > 0) {
+                        return arr.map(s => ({ name: String(s.name), active: s.active !== false, deleted: s.deleted === true }));
+                    }
+                }
+            } catch (e) {}
+            return getDefaultSubjectsForClass(cls).map(n => ({ name: n, active: true, deleted: false }));
+        }
+
+        function saveSubjectConfig(cls, cfg) {
+            localStorage.setItem(getSubjectsConfigKey(cls), JSON.stringify(cfg));
+        }
+
         function updateSubjectsList() {
             const selectedClass = document.getElementById('classSelect').value;
-            if (["الأول الابتدائي", "الثاني الابتدائي"].includes(selectedClass)) {
-                currentSubjects = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
-            } else if (selectedClass === "الثالث الابتدائي") {
-                currentSubjects = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية" , "الفنية", "التربية الرياضية"];
-            } else {
-                currentSubjects = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
-            }
+            const cfg = loadSubjectConfig(selectedClass);
+            currentSubjects = cfg.map(s => s.name);
+            currentActive = cfg.map(s => s.active && !s.deleted);
         }
 
         function toArabicDigits(num) {
@@ -659,6 +744,7 @@
         }
 
         function toEnglishDigits(str) {
+            if (String(str).trim() === 'صفر') return '0';
             return str.replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 1632; });
         }
 
@@ -676,7 +762,8 @@
         }
 
         function convertTotalNumberToWords(num) {
-            if (isNaN(num) || num <= 0) return "";
+            if (isNaN(num) || num < 0) return "";
+            if (num === 0) return "صفر";
             if (num === 100) return "مئة";
             const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
             const tens = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
@@ -779,7 +866,8 @@
                 <th class="sticky-name-col" rowspan="2" style="width:180px;">اسم التلميذ</th>`;
             
             currentSubjects.forEach((subject, idx) => {
-                headerHTML += `<th class="subject-col rotated-th" data-subject-idx="${idx}" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
+                const offCls = currentActive[idx] ? '' : ' subject-inactive';
+                headerHTML += `<th class="subject-col rotated-th${offCls}" data-subject-idx="${idx}" rowspan="2"><span class="rotated-text">${subject}</span></th>`;
             });
             headerRow.innerHTML = headerHTML + `<th colspan="2">المجموع</th><th rowspan="2">النتيجة</th><th rowspan="2" style="font-size: 12px; width:120px;">مواد الإكمال</th><th rowspan="2" class="actions-col" style="width:170px;">إجراءات<br><label style="font-size:11px; font-weight:normal; display:inline-flex; align-items:center; gap:3px; margin-top:3px; cursor:pointer;"><input type="checkbox" id="selectAllRowsCheckbox" onchange="toggleSelectAllRows(this)"> تحديد الكل</label></th>`;
             headerRow2.innerHTML = `<th class="total-sub-th">رقماً</th><th class="total-sub-th">كتابة</th>`;
@@ -788,6 +876,7 @@
             if (subjectFilterSelect) {
                 let optionsHTML = `<option value="all">عرض كل المواد</option>`;
                 currentSubjects.forEach((subject, idx) => {
+                    if (!currentActive[idx]) return;
                     optionsHTML += `<option value="${idx}">${subject}</option>`;
                 });
                 subjectFilterSelect.innerHTML = optionsHTML;
@@ -800,6 +889,7 @@
                 const prevPasteVal = pasteGradesSubjectSelect.value;
                 let pasteOptionsHTML = '';
                 currentSubjects.forEach((subject, idx) => {
+                    if (!currentActive[idx]) return;
                     pasteOptionsHTML += `<option value="${idx}">${subject}</option>`;
                 });
                 pasteGradesSubjectSelect.innerHTML = pasteOptionsHTML;
@@ -816,19 +906,19 @@
 
             const statsContainer = document.getElementById('statsContainer');
             let statsHTML = `<table class="stats-table"><thead><tr><th style="background-color: #b3b3b3;">المادة</th>`;
-            currentSubjects.forEach(subject => { statsHTML += `<th class="subject-col rotated-th"><span class="rotated-text">${subject}</span></th>`; });
+            currentSubjects.forEach((subject, idx) => { if (!currentActive[idx]) return; statsHTML += `<th class="subject-col rotated-th"><span class="rotated-text">${subject}</span></th>`; });
             statsHTML += `<th style="background-color: #f2f2f2;">المجموع للشعبة</th></tr></thead><tbody><tr><td class="stats-title-col">المشتركون</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-registered-${idx}">٠</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-registered-${idx}">٠</td>`; });
             statsHTML += `<td id="stat-registered-total">٠</td></tr><tr><td class="stats-title-col">الغائبون</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-disabled-${idx}">٠</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-disabled-${idx}">٠</td>`; });
             statsHTML += `<td id="stat-absent-total">٠</td></tr><tr><td class="stats-title-col">الناجحون</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-passed-${idx}">٠</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-passed-${idx}">٠</td>`; });
             statsHTML += `<td id="stat-passed-total">٠</td></tr><tr><td class="stats-title-col">الراسبون</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-failed-${idx}">٠</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-failed-${idx}">٠</td>`; });
             statsHTML += `<td id="stat-failed-total">٠</td></tr><tr><td class="stats-title-col">المكملون</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-reappear-${idx}">-</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-reappear-${idx}">-</td>`; });
             statsHTML += `<td id="stat-reappear-total">٠</td></tr><tr style="background-color: #f9f9f9;"><td class="stats-title-col" style="color: #0056b3;">النسبة المئوية للشعبة</td>`;
-            currentSubjects.forEach((_, idx) => { statsHTML += `<td id="stat-percent-${idx}" style="color: #0056b3;">٠%</td>`; });
+            currentSubjects.forEach((_, idx) => { if (!currentActive[idx]) return; statsHTML += `<td id="stat-percent-${idx}" style="color: #0056b3;">٠%</td>`; });
             statsHTML += `<td id="stat-percent-total" style="color: #0056b3;">٠%</td></tr></tbody></table>`;
             statsContainer.innerHTML = statsHTML;
         }
@@ -866,6 +956,7 @@
                 let failedSubjectIndexes = [];
 
                 gradeInputs.forEach((input, index) => {
+                    if (!currentActive[index]) return; // مادة معطّلة: لا تُحسب
                     let val = input.value.trim();
                     
                     if (val === "") {
@@ -917,7 +1008,7 @@
                 const statusField = row.querySelector('.status-field');
                 const reappearField = row.querySelector('.reappear-subjects-field');
 
-                if (studentEmptyCells === gradeInputs.length) {
+                if (studentEmptyCells === currentActive.filter(Boolean).length) {
                     totalField.innerText = "";
                     totalWordsField.innerText = "";
                     statusField.innerText = "";
@@ -1053,7 +1144,8 @@
             for(let i = 0; i < subjectsCount; i++) {
                 let val = (student.grades && student.grades[i] !== undefined) ? student.grades[i] : "";
                 const hideStyle = (activeSubjectFilterIndex !== -1 && activeSubjectFilterIndex !== i) ? ' style="display:none;"' : '';
-                gradesHTML += `<td data-subject-idx="${i}"${hideStyle}><input type="text" class="direct-input grade-input-field" value="${val}" oninput="onFieldInputHandler()" autocomplete="off"></td>`;
+                const offCls = currentActive[i] ? '' : ' class="subject-inactive"';
+                gradesHTML += `<td data-subject-idx="${i}"${offCls}${hideStyle}><input type="text" class="direct-input grade-input-field" value="${val}" oninput="onFieldInputHandler()" autocomplete="off" enterkeyhint="next"></td>`;
             }
 
             tr.innerHTML = `
@@ -1137,6 +1229,7 @@
 
             document.querySelectorAll('[data-subject-idx]').forEach(el => {
                 const idx = parseInt(el.dataset.subjectIdx);
+                if (!currentActive[idx]) return;
                 el.style.display = (activeSubjectFilterIndex === -1 || idx === activeSubjectFilterIndex) ? '' : 'none';
             });
         }
@@ -1518,7 +1611,7 @@
             const backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key.startsWith('studentsNamesOnlyData_') || key.startsWith('studentsGradesData_') || ['schoolInfoGlobalData_v4', 'footerInfoData'].includes(key)) {
+                if (key.startsWith('studentsNamesOnlyData_') || key.startsWith('studentsGradesData_') || key.startsWith('subjectsConfig_') || ['schoolInfoGlobalData_v4', 'footerInfoData'].includes(key)) {
                     backupData[key] = localStorage.getItem(key);
                 }
             }
@@ -1537,7 +1630,7 @@
                     if (confirm("⚠️ استبدال البيانات بالنسخة الاحتياطية؟")) {
                         for (let i = localStorage.length - 1; i >= 0; i--) {
                             const key = localStorage.key(i);
-                            if (key.startsWith('studentsNamesOnlyData_') || key.startsWith('studentsGradesData_') || ['schoolInfoGlobalData_v4', 'footerInfoData'].includes(key)) {
+                            if (key.startsWith('studentsNamesOnlyData_') || key.startsWith('studentsGradesData_') || key.startsWith('subjectsConfig_') || ['schoolInfoGlobalData_v4', 'footerInfoData'].includes(key)) {
                                 localStorage.removeItem(key);
                             }
                         }
@@ -1621,6 +1714,7 @@
                 `;
 
                 row.querySelectorAll('.grade-input-field').forEach((input, idx) => {
+                    if (!currentActive[idx]) return;
                     const gradeVal = input.value.trim();
                     let subjectStatus = "ناجح";
                     let wordsGrade = convertNumberToArabicWords(gradeVal);
@@ -1694,13 +1788,16 @@
             window.scrollTo(0, 0);
         }
 
+        function getActiveSubjectIndicesForClass(cls) {
+            const cfg = loadSubjectConfig(cls);
+            const idxs = [];
+            cfg.forEach((s, i) => { if (s.active && !s.deleted) idxs.push(i); });
+            return idxs;
+        }
+
         function getSubjectsForClassName(cls) {
-            if (["الأول الابتدائي", "الثاني الابتدائي"].includes(cls)) {
-                return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
-            } else if (cls === "الثالث الابتدائي") {
-                return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "العلوم", "الأخلاقية", "الفنية", "التربية الرياضية"];
-            }
-            return ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
+            const cfg = loadSubjectConfig(cls);
+            return getActiveSubjectIndicesForClass(cls).map(i => cfg[i].name);
         }
 
         function getPassingGradeForClassName(cls) {
@@ -1775,6 +1872,7 @@
                     if (namesList.length === 0) return;
 
                     const subjects = getSubjectsForClassName(cls);
+                    const activeIdxForCls = getActiveSubjectIndicesForClass(cls);
                     const passingGrade = getPassingGradeForClassName(cls);
                     const classDivLabel = div === "بدون شعبة" ? cls : `${cls} / ${div}`;
 
@@ -1782,7 +1880,8 @@
 
                     namesList.forEach((stName, index) => {
                         if (!stName.name || stName.name.trim() === "") return;
-                        const gradesArr = (gradesList[index] && gradesList[index].grades) ? gradesList[index].grades : [];
+                        const fullGradesArr = (gradesList[index] && gradesList[index].grades) ? gradesList[index].grades : [];
+                        const gradesArr = activeIdxForCls.map(i => fullGradesArr[i]);
                         const result = evaluateStudentForReport(gradesArr, subjects, passingGrade);
 
                         if (result.status === "مكمل" || result.status === "راسب") {
@@ -1790,7 +1889,8 @@
                                 name: stName.name.trim(),
                                 classDiv: classDivLabel,
                                 subjects: result.failedSubjects.length > 0 ? result.failedSubjects.join('، ') : (result.status === "راسب" ? "جميع المواد" : "-"),
-                                status: result.status
+                                status: result.status,
+                                count: result.failedSubjects.length
                             });
 
                             if (!classDivStats[classDivLabel]) classDivStats[classDivLabel] = { reappear: 0, fail: 0, subjectFail: {}, subjectsList: subjects };
@@ -1812,7 +1912,7 @@
 
             let bodyRowsHTML = "";
             if (reportRows.length === 0) {
-                bodyRowsHTML = `<tr><td colspan="6" class="rr-empty-note">لا يوجد تلاميذ مكملون أو راسبون ضمن البيانات المسجلة حالياً</td></tr>`;
+                bodyRowsHTML = `<tr><td colspan="7" class="rr-empty-note">لا يوجد تلاميذ مكملون أو راسبون ضمن البيانات المسجلة حالياً</td></tr>`;
             } else {
                 reportRows.forEach((r, idx) => {
                     bodyRowsHTML += `
@@ -1821,6 +1921,7 @@
                             <td class="rr-name-col">${r.name}</td>
                             <td>${r.classDiv}</td>
                             <td class="rr-subjects-col">${r.subjects}</td>
+                            <td style="font-weight: bold;">${toArabicDigits(r.count)}</td>
                             <td style="font-weight: bold; color: ${r.status === 'راسب' ? '#990000' : '#b7791f'};">${r.status}</td>
                             <td></td>
                         </tr>`;
@@ -1908,11 +2009,12 @@
                         <thead>
                             <tr>
                                 <th style="width:5%;">ت</th>
-                                <th style="width:22%;">اسم التلميذ</th>
-                                <th style="width:15%;">الصف والشعبة</th>
-                                <th style="width:33%;">المواد المكمل فيها</th>
-                                <th style="width:10%;">النتيجة</th>
-                                <th style="width:15%;">التوقيع</th>
+                                <th style="width:21%;">اسم التلميذ</th>
+                                <th style="width:14%;">الصف والشعبة</th>
+                                <th style="width:28%;">المواد المكمل فيها</th>
+                                <th style="width:10%;">عدد مواد الإكمال</th>
+                                <th style="width:9%;">النتيجة</th>
+                                <th style="width:13%;">التوقيع</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2049,6 +2151,212 @@
             loadCurrentGroupData();
         }
 
+
+        /* ================= إدارة المواد الدراسية ================= */
+        function cleanSubjectName(s) { return String(s || '').replace(/[<>&"'`]/g, '').trim(); }
+
+        function refreshAfterSubjectChange() {
+            saveAllStudentsData();      // حفظ ما كُتب قبل إعادة بناء الجدول
+            updateSubjectsList();
+            renderTableStructures();
+            loadCurrentGroupData();
+            renderSubjectsModalList();
+        }
+
+        function openSubjectsModal() {
+            document.getElementById('newSubjectInput').value = '';
+            document.getElementById('subjectsModal').style.display = 'block';
+            renderSubjectsModalList();
+        }
+
+        function closeSubjectsModal() { document.getElementById('subjectsModal').style.display = 'none'; }
+
+        function renderSubjectsModalList() {
+            const cls = document.getElementById('classSelect').value;
+            const cfg = loadSubjectConfig(cls);
+            document.getElementById('subjModalClassLabel').innerText = cls;
+
+            const listBox = document.getElementById('subjectsListBox');
+            const delBox = document.getElementById('deletedSubjectsBox');
+            listBox.innerHTML = '';
+            delBox.innerHTML = '';
+            let deletedCount = 0;
+
+            cfg.forEach((s, i) => {
+                if (s.deleted) {
+                    deletedCount++;
+                    const row = document.createElement('div');
+                    row.className = 'subj-row';
+                    const nm = document.createElement('span'); nm.className = 'subj-name'; nm.textContent = s.name;
+                    const rb = document.createElement('button'); rb.className = 'subj-mini-btn'; rb.textContent = '♻️ استرجاع';
+                    rb.onclick = () => restoreSubject(i);
+                    row.appendChild(nm); row.appendChild(rb);
+                    delBox.appendChild(row);
+                    return;
+                }
+                const row = document.createElement('div');
+                row.className = 'subj-row' + (s.active ? '' : ' is-off');
+
+                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = s.active;
+                cb.onchange = () => toggleSubjectActive(i, cb.checked);
+                const nm = document.createElement('span'); nm.className = 'subj-name'; nm.textContent = s.name;
+                const eb = document.createElement('button'); eb.className = 'subj-mini-btn'; eb.textContent = '✏️ تعديل الاسم';
+                eb.onclick = () => renameSubject(i);
+                const db = document.createElement('button'); db.className = 'subj-mini-btn danger'; db.textContent = '🗑️ حذف';
+                db.onclick = () => deleteSubject(i);
+
+                row.appendChild(cb); row.appendChild(nm); row.appendChild(eb); row.appendChild(db);
+                listBox.appendChild(row);
+            });
+
+            document.getElementById('deletedSubjectsWrap').style.display = deletedCount > 0 ? 'block' : 'none';
+        }
+
+        function mutateCurrentClassSubjects(fn) {
+            const cls = document.getElementById('classSelect').value;
+            const cfg = loadSubjectConfig(cls);
+            fn(cfg);
+            saveSubjectConfig(cls, cfg);
+            refreshAfterSubjectChange();
+        }
+
+        function toggleSubjectActive(i, isOn) {
+            mutateCurrentClassSubjects(cfg => { cfg[i].active = isOn; });
+        }
+
+        function renameSubject(i) {
+            const cfgNow = loadSubjectConfig(document.getElementById('classSelect').value);
+            const newName = cleanSubjectName(prompt('الاسم الجديد للمادة:', cfgNow[i].name));
+            if (!newName) return;
+            if (cfgNow.some((s, k) => k !== i && !s.deleted && s.name === newName)) { alert('⚠️ توجد مادة بهذا الاسم مسبقاً.'); return; }
+            mutateCurrentClassSubjects(cfg => { cfg[i].name = newName; });
+        }
+
+        function deleteSubject(i) {
+            const cfgNow = loadSubjectConfig(document.getElementById('classSelect').value);
+            if (!confirm(`حذف مادة "${cfgNow[i].name}"؟ (درجاتها المسجلة تبقى محفوظة ويمكن استرجاعها)`)) return;
+            mutateCurrentClassSubjects(cfg => { cfg[i].deleted = true; });
+        }
+
+        function restoreSubject(i) {
+            mutateCurrentClassSubjects(cfg => { cfg[i].deleted = false; cfg[i].active = true; });
+        }
+
+        function addNewSubject() {
+            const input = document.getElementById('newSubjectInput');
+            const name = cleanSubjectName(input.value);
+            if (!name) { alert('الرجاء كتابة اسم المادة.'); return; }
+
+            const currentCls = document.getElementById('classSelect').value;
+            const curCfg = loadSubjectConfig(currentCls);
+            if (curCfg.some(s => !s.deleted && s.name === name)) { alert('⚠️ هذه المادة موجودة مسبقاً في هذا الصف.'); return; }
+
+            if (document.getElementById('newSubjectAllClasses').checked) {
+                Array.from(document.getElementById('classSelect').options).map(o => o.value).forEach(cls => {
+                    if (cls === currentCls) return;
+                    const c = loadSubjectConfig(cls);
+                    if (!c.some(s => !s.deleted && s.name === name)) {
+                        c.push({ name: name, active: true, deleted: false });
+                        saveSubjectConfig(cls, c);
+                    }
+                });
+            }
+            mutateCurrentClassSubjects(cfg => { cfg.push({ name: name, active: true, deleted: false }); });
+            input.value = '';
+        }
+
+        /* ================= التنقل أعلى/أسفل أثناء إدخال الدرجات ================= */
+        function isNavInput(el) {
+            return el && el.classList && (el.classList.contains('grade-input-field') || el.classList.contains('student-id-input'))
+                && el.closest && el.closest('#tableBody');
+        }
+
+        function navigateGradeCell(dir) {
+            const el = document.activeElement;
+            if (!isNavInput(el)) return;
+            const td = el.closest('td');
+            const tr = td.parentElement;
+            const colIdx = td.cellIndex;
+            let next = tr;
+            do { next = dir > 0 ? next.nextElementSibling : next.previousElementSibling; }
+            while (next && next.style.display === 'none');
+            if (!next) return;
+            const cell = next.cells[colIdx];
+            const target = cell ? cell.querySelector('input.direct-input') : null;
+            if (!target) return;
+            target.focus();
+            try { target.select(); } catch (e) {}
+            target.scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
+
+        /* تنقل أفقي: الجدول من اليمين لليسار، فالسهم الأيسر ◀ ينتقل للخانة التالية في الترتيب */
+        function navigateGradeCellH(step) {
+            const el = document.activeElement;
+            if (!isNavInput(el)) return;
+            const td = el.closest('td');
+            const tr = td.parentElement;
+            let i = td.cellIndex + step;
+            while (i >= 0 && i < tr.cells.length) {
+                const c = tr.cells[i];
+                const inp = c.querySelector('input.grade-input-field, input.student-id-input');
+                if (inp && getComputedStyle(c).display !== 'none') {
+                    inp.focus();
+                    try { inp.select(); } catch (e) {}
+                    inp.scrollIntoView({ block: 'nearest', inline: 'center' });
+                    return;
+                }
+                i += step;
+            }
+        }
+
+        (function setupGradeNavigation() {
+            const tbody = document.getElementById('tableBody');
+            tbody.addEventListener('keydown', function (e) {
+                if (!isNavInput(e.target)) return;
+                if (e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey)) { e.preventDefault(); navigateGradeCell(1); }
+                else if (e.key === 'ArrowUp' || (e.key === 'Enter' && e.shiftKey)) { e.preventDefault(); navigateGradeCell(-1); }
+                else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    const t = e.target;
+                    const len = t.value.length;
+                    const allSel = t.selectionStart === 0 && t.selectionEnd === len;
+                    const atEnd = t.selectionStart === len && t.selectionEnd === len;
+                    const atStart = t.selectionStart === 0 && t.selectionEnd === 0;
+                    if (e.key === 'ArrowLeft' && (allSel || atEnd || len === 0)) { e.preventDefault(); navigateGradeCellH(1); }
+                    else if (e.key === 'ArrowRight' && (allSel || atStart || len === 0)) { e.preventDefault(); navigateGradeCellH(-1); }
+                }
+            });
+
+            const bar = document.getElementById('navFloat');
+            let hideTimer = null;
+            document.addEventListener('focusin', function (e) {
+                if (isNavInput(e.target)) { clearTimeout(hideTimer); bar.style.display = 'flex'; }
+            });
+            document.addEventListener('focusout', function () {
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(function () {
+                    if (!isNavInput(document.activeElement)) bar.style.display = 'none';
+                }, 200);
+            });
+
+            function bindNav(btn, dir) {
+                // منع سحب التركيز من الخانة حتى تبقى لوحة المفاتيح مفتوحة
+                btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+                btn.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+                btn.addEventListener('touchend', function (e) { e.preventDefault(); navigateGradeCell(dir); });
+                btn.addEventListener('click', function () { navigateGradeCell(dir); });
+            }
+            bindNav(document.getElementById('navUpBtn'), -1);
+            bindNav(document.getElementById('navDownBtn'), 1);
+            function bindNavH(btn, step) {
+                btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+                btn.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+                btn.addEventListener('touchend', function (e) { e.preventDefault(); navigateGradeCellH(step); });
+                btn.addEventListener('click', function () { navigateGradeCellH(step); });
+            }
+            bindNavH(document.getElementById('navLeftBtn'), 1);
+            bindNavH(document.getElementById('navRightBtn'), -1);
+        })();
+
         window.onclick = function(event) {
             const importModal = document.getElementById('importModal');
             const pasteGradesModal = document.getElementById('pasteGradesModal');
@@ -2058,6 +2366,7 @@
             if (event.target == pasteGradesModal) closePasteGradesModal();
             if (event.target == migrateModal) closeMigrateModal();
             if (event.target == migrateStudentModal) closeMigrateStudentModal();
+            if (event.target == document.getElementById('subjectsModal')) closeSubjectsModal();
         }
         document.addEventListener('DOMContentLoaded', loadSavedSystemConfig);
     </script>
