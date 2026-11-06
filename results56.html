@@ -127,7 +127,11 @@
         .simple-card-table { table-layout: fixed; width: 100%; border-collapse: collapse; margin: 15px 0; border: 3px solid #000; flex: 1; }
         .simple-card-table th { background-color: #63e3e4; color: #000; font-size: 16px; border: 2px solid #000; padding: 8px 4px; vertical-align: middle; text-align: center; font-weight: 800; }
         .simple-card-table td { border: 2px solid #000; padding: 7px 4px; font-size: 17px; text-align: center; height: 36px; font-weight: 800; color: #000; }
-        .simple-subject-cell { width: 46% !important; text-align: right !important; padding-right: 16px !important; font-weight: 700; font-size: 16px !important; background-color: #ffffff !important; }
+        .simple-subject-cell { width: 46% !important; text-align: right !important; padding-right: 16px !important; font-weight: 700; font-size: 16px !important; background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        th.simple-subject-cell { background-color: #63e3e4 !important; }
+        .simple-card-student-name { color: #000 !important; font-weight: 900 !important; font-size: 18px; -webkit-text-stroke: 0.4px #000; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .undo-toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 9px 22px; border-radius: 6px; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 14px; z-index: 99999; box-shadow: 0 3px 10px rgba(0,0,0,.35); pointer-events: none; }
         .simple-grade-num-cell { width: 27%; font-size: 18px !important; font-weight: 800 !important; }
         .simple-grade-word-cell { width: 27%; font-size: 14px !important; }
 
@@ -272,6 +276,8 @@
 
         <div class="controls-container">
             <div class="controls-row">
+                <button class="btn" id="undoBtn" style="background:#1e40af; color:#fff;" onclick="undoLastAction()" title="الرجوع خطوة (Ctrl+Z)" disabled>↩️ رجوع خطوة <span id="undoCount"></span></button>
+                <button class="btn" id="redoBtn" style="background:#475569; color:#fff;" onclick="redoLastAction()" title="إعادة الخطوة (Ctrl+Y)" disabled>↪️ إعادة</button>
                 <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ</button>
                 <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد من إكسل</button>
                 <button class="btn btn-excel" style="background:#0e7c66;" onclick="openPasteGradesModal()">📋 لصق درجات مادة</button>
@@ -1597,7 +1603,7 @@ value="د">د</option><option                   value="بدون شعبة">بدو
                                 <div class="school-line">${schoolName}</div>
                             </div>
                             <div class="simple-card-header-center-box"><h2>${examType}</h2><p>الدور / الشهر: ${examRole}</p><p>العام الدراسي: ${schoolYear}</p></div>
-                            <div class="simple-card-header-left">اسم التلميذ: ${studentName}<br>الصف والشعبة: ${classDivisionLabel}<br>رقم القيد: ${examId}</div>
+                            <div class="simple-card-header-left">اسم التلميذ: <span class="simple-card-student-name">${studentName}</span><br>الصف والشعبة: ${classDivisionLabel}<br>رقم القيد: ${examId}</div>
                         </div>
                         <table class="simple-card-table">
                             <thead>
@@ -2083,6 +2089,111 @@ value="د">د</option><option                   value="بدون شعبة">بدو
         document.addEventListener('focusin', function(e) {
             const t = e.target;
             if (t && t.classList && t.classList.contains('grade-input-field')) setTimeout(() => t.select(), 0);
+        });
+
+
+        /* ============================= الرجوع خطوة (تراجع / إعادة) ============================= */
+        const BASE_SUBJECTS = ["التربية الاسلامية", "اللغة العربية", "اللغة الانكليزية", "الرياضيات", "الاجتماعيات", "العلوم", "الفنية", "التربية الرياضية"];
+        const UNDO_LIMIT = 50;
+        let undoStack = [], redoStack = [], undoBusy = false, lastTypedTarget = null, lastTypedTime = 0;
+
+        function isUndoKey(k) { return k && (k.indexOf('db_') !== -1 || k === 'advFooterInfoData' || k === SUBJ_CFG_KEY); }
+        function takeSnapshot() {
+            const o = {};
+            Object.keys(localStorage).sort().forEach(k => { if(isUndoKey(k)) o[k] = localStorage.getItem(k); });
+            return {
+                data: JSON.stringify(o),
+                ctx: { cl: curCl(), div: curDiv(), type: document.getElementById('examTypeSelect').value, role: document.getElementById('examRoleSelect').value }
+            };
+        }
+        function updateUndoButtons() {
+            const u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn'), c = document.getElementById('undoCount');
+            if(u) u.disabled = undoStack.length === 0;
+            if(r) r.disabled = redoStack.length === 0;
+            if(c) c.textContent = undoStack.length ? '(' + toArabicDigits(undoStack.length) + ')' : '';
+        }
+        function pushUndo() {
+            if(undoBusy) return;
+            const snap = takeSnapshot();
+            const top = undoStack[undoStack.length - 1];
+            if(top && top.data === snap.data) return;
+            undoStack.push(snap);
+            if(undoStack.length > UNDO_LIMIT) undoStack.shift();
+            redoStack = [];
+            updateUndoButtons();
+        }
+        function showUndoToast(msg) {
+            let t = document.getElementById('undoToast');
+            if(!t) { t = document.createElement('div'); t.id = 'undoToast'; t.className = 'undo-toast'; document.body.appendChild(t); }
+            t.textContent = msg; t.style.display = 'block';
+            clearTimeout(showUndoToast._t); showUndoToast._t = setTimeout(() => { t.style.display = 'none'; }, 1500);
+        }
+        function reloadSubjectsFromStorage() {
+            currentSubjects.length = 0; BASE_SUBJECTS.forEach(n => currentSubjects.push(n));
+            subjCfg = { extra: [], renamed: {}, archived: [], off: {} };
+            try { const sc = JSON.parse(localStorage.getItem(SUBJ_CFG_KEY) || 'null'); if(sc) subjCfg = Object.assign(subjCfg, sc); } catch(e) {}
+            subjCfg.extra.forEach(n => currentSubjects.push(n));
+            Object.keys(subjCfg.renamed).forEach(i => { if(currentSubjects[i] !== undefined) currentSubjects[i] = subjCfg.renamed[i]; });
+        }
+        function restoreSnapshot(snap) {
+            undoBusy = true;
+            try {
+                const data = JSON.parse(snap.data);
+                Object.keys(localStorage).forEach(k => { if(isUndoKey(k) && !(k in data)) localStorage.removeItem(k); });
+                Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                reloadSubjectsFromStorage();
+                // نعيد المستخدم إلى الصف/الشعبة/الامتحان الذي حدث فيه الإجراء ليرى أثر الرجوع
+                document.getElementById('classSelect').value = snap.ctx.cl;
+                document.getElementById('divisionSelect').value = snap.ctx.div;
+                document.getElementById('examTypeSelect').value = snap.ctx.type;
+                document.getElementById('examRoleSelect').value = snap.ctx.role;
+                const f = JSON.parse(localStorage.getItem('advFooterInfoData') || "{}");
+                if(f.manager) document.getElementById('managerName').value = f.manager;
+                if(f.title) document.getElementById('managerTitle').value = f.title;
+                saveSchoolInfo(); renderTableStructures(); loadCurrentGroupData();
+                if(document.getElementById('subjectsModal').style.display === 'block') renderSubjectsManager();
+            } finally { undoBusy = false; }
+        }
+        function undoLastAction() {
+            const current = takeSnapshot();
+            let snap = null;
+            while(undoStack.length) { const c = undoStack.pop(); if(c.data !== current.data) { snap = c; break; } }
+            if(!snap) { updateUndoButtons(); showUndoToast('لا توجد خطوات للرجوع عنها'); return; }
+            redoStack.push(current);
+            restoreSnapshot(snap); updateUndoButtons(); showUndoToast('↩️ تم الرجوع خطوة');
+        }
+        function redoLastAction() {
+            const current = takeSnapshot();
+            let snap = null;
+            while(redoStack.length) { const c = redoStack.pop(); if(c.data !== current.data) { snap = c; break; } }
+            if(!snap) { updateUndoButtons(); showUndoToast('لا توجد خطوات للإعادة'); return; }
+            undoStack.push(current);
+            restoreSnapshot(snap); updateUndoButtons(); showUndoToast('↪️ تمت إعادة الخطوة');
+        }
+        // أي إجراء مؤثر يُحفظ قبله لقطة من البيانات
+        ['addStudentRow', 'deleteStudentRow', 'clearSelectedGrades', 'clearAllData', 'processPastedData', 'processPastedGrades',
+         'executeStudentsMigration', 'executeSingleStudentMigration', 'importFullBackup', 'applySubjectsChange'].forEach(name => {
+            const orig = window[name];
+            if(typeof orig !== 'function') return;
+            window[name] = function() { pushUndo(); return orig.apply(this, arguments); };
+        });
+        // الكتابة داخل الخانات: لقطة واحدة لكل خانة (أو بعد توقف عن الكتابة ثانيتين) قبل أول حرف
+        document.addEventListener('input', function(e) {
+            const t = e.target;
+            if(!t || t.tagName !== 'INPUT' || !t.classList.contains('direct-input')) return;
+            const now = Date.now();
+            if(t !== lastTypedTarget || now - lastTypedTime > 2000) pushUndo();
+            lastTypedTarget = t; lastTypedTime = now;
+        }, true);
+        document.addEventListener('keydown', function(e) {
+            if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            const isZ = e.code === 'KeyZ', isY = e.code === 'KeyY';
+            if(!isZ && !isY) return;
+            const t = e.target;
+            if(t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && !t.classList.contains('direct-input')))) return; // نترك التراجع الأصلي للنصوص خارج الجدول
+            if(document.getElementById('mainSystemContainer').style.display === 'none') return;
+            e.preventDefault();
+            if(isY || (isZ && e.shiftKey)) redoLastAction(); else undoLastAction();
         });
 
         document.addEventListener('DOMContentLoaded', loadSavedConfig);
