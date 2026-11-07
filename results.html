@@ -355,6 +355,7 @@
         /* أزرار التنقل العائمة (أعلى/أسفل) أثناء إدخال الدرجات */
         .nav-float { display: none; position: fixed; top: 30%; left: 8px; z-index: 450; flex-direction: column; gap: 8px; }
         .nav-float button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #0056b3; background: rgba(255,255,255,0.92); color: #0056b3; font-size: 22px; line-height: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: pointer; touch-action: manipulation; }
+        .nav-float button:disabled { opacity: 0.35; }
         .nav-float button:active { background: #0056b3; color: #fff; }
 
         @media print {
@@ -472,6 +473,8 @@
                     <button class="btn btn-add" onclick="addStudentRow()">➕ إضافة تلميذ واحد</button>
                     <button class="btn btn-excel" onclick="openImportModal()">📥 استيراد التلاميذ (نسخ ولصق)</button>
                     <button class="btn btn-excel" style="background-color:#0e7c66;" onclick="openPasteGradesModal()">📋 لصق درجات مادة</button>
+                    <button class="btn" id="undoBtnTop" style="background-color:#495057; color:#fff;" onclick="undoAction()" title="تراجع (Ctrl+Z)">↩️ تراجع</button>
+                    <button class="btn" id="redoBtnTop" style="background-color:#495057; color:#fff;" onclick="redoAction()" title="إعادة (Ctrl+Y)">↪️ إعادة</button>
                     <button class="btn" style="background-color:#6f42c1; color:#fff;" onclick="openSubjectsModal()">📚 إدارة المواد الدراسية</button>
                     <button class="btn btn-cards" onclick="generateReportCards()">🎴 توليد كارتات النتائج</button>
                     <button class="btn" style="background-color: #b7791f; color: #fff;" onclick="generateReappearFailReport()">📋 طباعة سجل المكملين والراسبين (كل الصفوف)</button>
@@ -682,7 +685,12 @@
     </div>
 
     <!-- أزرار التنقل العائمة -->
+    <div id="undoToast" class="no-print" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; z-index:900;"></div>
     <div id="navFloat" class="nav-float no-print">
+        <div style="display:flex; gap:8px;">
+            <button type="button" id="redoBtnFloat" title="إعادة">↪</button>
+            <button type="button" id="undoBtnFloat" title="تراجع">↩</button>
+        </div>
         <div style="display:flex; justify-content:center;"><button type="button" id="navUpBtn" title="الخانة الأعلى">▲</button></div>
         <div style="display:flex; gap:8px;">
             <button type="button" id="navRightBtn" title="الخانة على اليمين">▶</button>
@@ -2355,6 +2363,121 @@
             }
             bindNavH(document.getElementById('navLeftBtn'), 1);
             bindNavH(document.getElementById('navRightBtn'), -1);
+        })();
+
+        /* ================= التراجع والإعادة ================= */
+        (function setupUndoRedo() {
+            const PREFIXES = ['studentsNamesOnlyData_', 'studentsGradesData_', 'subjectsConfig_'];
+            const MAX_STEPS = 40;
+            const origSet = Storage.prototype.setItem;
+            const origRemove = Storage.prototype.removeItem;
+            const origClear = Storage.prototype.clear;
+            let hist = [], pos = -1, timer = null, restoring = false;
+
+            const isTracked = k => typeof k === 'string' && PREFIXES.some(p => k.startsWith(p));
+
+            function capture() {
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isTracked(k)) keys.push(k); }
+                keys.sort();
+                return JSON.stringify(keys.map(k => [k, localStorage.getItem(k)]));
+            }
+
+            function updateButtons() {
+                const canUndo = pos > 0, canRedo = pos < hist.length - 1;
+                ['undoBtnTop', 'undoBtnFloat'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !canUndo; });
+                ['redoBtnTop', 'redoBtnFloat'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !canRedo; });
+            }
+
+            function commit() {
+                timer = null;
+                const snap = capture();
+                if (hist[pos] === snap) { updateButtons(); return; }
+                hist = hist.slice(0, pos + 1);
+                hist.push(snap);
+                if (hist.length > MAX_STEPS) hist.shift();
+                pos = hist.length - 1;
+                updateButtons();
+            }
+
+            function schedule() { if (restoring) return; clearTimeout(timer); timer = setTimeout(commit, 600); }
+            function flush() { if (timer) { clearTimeout(timer); commit(); } }
+
+            Storage.prototype.setItem = function (k, v) { origSet.call(this, k, v); if (this === localStorage && isTracked(k)) schedule(); };
+            Storage.prototype.removeItem = function (k) { origRemove.call(this, k); if (this === localStorage && isTracked(k)) schedule(); };
+            Storage.prototype.clear = function () { origClear.call(this); if (this === localStorage) schedule(); };
+
+            function toast(msg) {
+                const t = document.getElementById('undoToast');
+                t.textContent = msg; t.style.display = 'block';
+                clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 1400);
+            }
+
+            function restore(snap) {
+                restoring = true;
+                try {
+                    const act = document.activeElement;
+                    let focusInfo = null;
+                    if (act && act.closest && act.closest('#tableBody')) {
+                        const tr = act.closest('tr'), td = act.closest('td');
+                        focusInfo = { row: Array.from(document.querySelectorAll('#tableBody .student-row')).indexOf(tr), col: td ? td.cellIndex : -1 };
+                    }
+                    const del = [];
+                    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isTracked(k)) del.push(k); }
+                    del.forEach(k => origRemove.call(localStorage, k));
+                    JSON.parse(snap).forEach(([k, v]) => origSet.call(localStorage, k, v));
+
+                    updateSubjectsList();
+                    renderTableStructures();
+                    loadCurrentGroupData();
+                    if (document.getElementById('subjectsModal').style.display === 'block') renderSubjectsModalList();
+
+                    if (focusInfo && focusInfo.row >= 0 && focusInfo.col >= 0) {
+                        const tr = document.querySelectorAll('#tableBody .student-row')[focusInfo.row];
+                        const cell = tr && tr.cells[focusInfo.col];
+                        const inp = cell && cell.querySelector('input.direct-input');
+                        if (inp) inp.focus();
+                    }
+                } finally { restoring = false; }
+                updateButtons();
+            }
+
+            window.undoAction = function () {
+                flush();
+                if (pos <= 0) { toast('لا توجد خطوة للتراجع'); return; }
+                pos--; restore(hist[pos]); toast('↩️ تم التراجع خطوة');
+            };
+            window.redoAction = function () {
+                flush();
+                if (pos >= hist.length - 1) { toast('لا توجد خطوة للإعادة'); return; }
+                pos++; restore(hist[pos]); toast('↪️ تمت الإعادة');
+            };
+
+            function bindFloat(id, fn) {
+                const b = document.getElementById(id);
+                b.addEventListener('mousedown', e => e.preventDefault());
+                b.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+                b.addEventListener('touchend', e => { e.preventDefault(); fn(); });
+                b.addEventListener('click', fn);
+            }
+            bindFloat('undoBtnFloat', () => window.undoAction());
+            bindFloat('redoBtnFloat', () => window.redoAction());
+
+            document.addEventListener('keydown', function (e) {
+                if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+                const k = e.key.toLowerCase();
+                const t = e.target;
+                // لا نتدخل في حقول خارج الجدول (مثل اسم المدرسة) ليبقى تراجع الكتابة الاعتيادي
+                const inTable = t && t.closest && t.closest('#tableBody');
+                const isField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT');
+                if (isField && !inTable) return;
+                if (k === 'z' && !e.shiftKey) { e.preventDefault(); window.undoAction(); }
+                else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); window.redoAction(); }
+            });
+
+            // الحالة الأولية
+            setTimeout(function () { hist = [capture()]; pos = 0; updateButtons(); }, 300);
+            updateButtons();
         })();
 
         window.onclick = function(event) {
